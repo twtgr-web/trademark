@@ -1,0 +1,259 @@
+:root {
+  color-scheme: light;
+  --bg: #fafafa;
+  --card-bg: #ffffff;
+  --border: #e4e4e7;
+  --text: #18181b;
+  --muted: #71717a;
+  --accent: #18181b;
+  --accent-text: #ffffff;
+  --warn-bg: #fef3c7;
+  --warn-text: #92400e;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.page-header h1 {
+  margin: 0 0 0.4rem;
+  font-size: 1.6rem;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.small {
+  font-size: 0.8rem;
+}
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 1.25rem 1.4rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.card h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1.05rem;
+}
+
+.card > .muted {
+  margin: 0 0 0.75rem;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem 2rem;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+}
+
+@media (max-width: 900px) {
+  .grid-3,
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+  padding: 0.2rem 0;
+}
+
+.field span {
+  color: var(--text);
+}
+
+.field input[type="number"] {
+  width: 6rem;
+  text-align: right;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  font-size: 0.9rem;
+}
+
+.field input[type="checkbox"] {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.field.row {
+  margin: 0.35rem 0;
+}
+
+.field-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0.5rem 0 0.4rem;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 0.6rem;
+}
+
+.hint {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin: 0.5rem 0 0;
+}
+
+.mode-toggle {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  overflow: hidden;
+}
+
+.mode-toggle button {
+  flex: 1;
+  padding: 0.4rem 0.6rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.mode-toggle button.active {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.country-list {
+  max-height: 14rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-right: 0.25rem;
+}
+
+.country-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.country-row label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 1;
+}
+
+.badge-warn {
+  background: var(--warn-bg);
+  color: var(--warn-text);
+  font-size: 0.7rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 0.3rem;
+  white-space: nowrap;
+}
+
+.override-input {
+  width: 5.5rem;
+  text-align: right;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.78rem;
+  border: 1px solid var(--border);
+  border-radius: 0.35rem;
+}
+
+table.line-items {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  margin-top: 0.5rem;
+}
+
+table.line-items td {
+  padding: 0.4rem 0;
+  border-bottom: 1px solid #f4f4f5;
+}
+
+table.line-items tr:last-child td {
+  border-bottom: none;
+}
+
+table.line-items .amount {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+table.line-items .subtotal td {
+  font-weight: 600;
+  border-top: 1px solid var(--border);
+  border-bottom: none;
+  padding-top: 0.6rem;
+}
+
+table.line-items .grand-total td {
+  font-weight: 700;
+  font-size: 1.05rem;
+  padding-top: 0.7rem;
+}
+
+.empty-hint {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 0.5rem 0 0;
+}
+
+.footer {
+  background: #f9fafb;
+  font-size: 0.8rem;
+}
+
+.footer-title {
+  font-weight: 600;
+  margin: 0 0 0.4rem;
+}
+
+.footer ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.footer a {
+  color: var(--text);
+}

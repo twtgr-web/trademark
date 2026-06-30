@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gebührenrechner für Markenanmeldungen</title>
+  <link rel="icon" href="data:," />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="page">
+    <header class="page-header">
+      <h1>Gebührenrechner für Markenanmeldungen</h1>
+      <p class="muted">
+        Amtliche Gebühren von DPMA, EUIPO und WIPO (Madrider System) sowie patentanwaltliche Gebühren auf einen
+        Blick. Alle Werte sind Schätzungen und ersetzen keine verbindliche Auskunft.
+      </p>
+    </header>
+
+    <section class="card">
+      <h2>Allgemeine Angaben</h2>
+      <div class="grid-2">
+        <label class="field">
+          <span>Anzahl Waren-/Dienstleistungsklassen</span>
+          <input type="number" id="classes" min="1" step="1" />
+        </label>
+        <label class="field">
+          <span>Wechselkurs CHF → EUR</span>
+          <input type="number" id="exchange-rate" min="0" step="0.01" />
+        </label>
+      </div>
+      <p class="hint">
+        Die Klassenzahl gilt einheitlich für DPMA, EUIPO und WIPO. Der Wechselkurs dient nur der Umrechnung der
+        CHF-Gebühren der WIPO für die Gesamtsumme und kann manuell angepasst werden.
+      </p>
+    </section>
+
+    <div class="grid-3">
+      <section class="card">
+        <h2>DPMA (Deutschland)</h2>
+        <p class="muted small" id="dpma-asof"></p>
+        <label class="field row">
+          <span>Berücksichtigen</span>
+          <input type="checkbox" id="dpma-enabled" />
+        </label>
+        <div id="dpma-panel" class="panel">
+          <div class="mode-toggle">
+            <button type="button" data-mode-group="dpma" data-mode="application">Anmeldung</button>
+            <button type="button" data-mode-group="dpma" data-mode="renewal">Verlängerung</button>
+          </div>
+          <div id="dpma-application-only" class="panel">
+            <label class="field row"><span>Elektronische Anmeldung</span><input type="checkbox" id="dpma-electronic" /></label>
+            <label class="field row"><span>Beschleunigte Prüfung beantragen</span><input type="checkbox" id="dpma-accelerated" /></label>
+          </div>
+          <label class="field row"><span>Widerspruchsverfahren</span><input type="checkbox" id="dpma-opposition" /></label>
+          <div id="dpma-results"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>EUIPO (Unionsmarke)</h2>
+        <p class="muted small" id="euipo-asof"></p>
+        <label class="field row">
+          <span>Berücksichtigen</span>
+          <input type="checkbox" id="euipo-enabled" />
+        </label>
+        <div id="euipo-panel" class="panel">
+          <div class="mode-toggle">
+            <button type="button" data-mode-group="euipo" data-mode="application">Anmeldung</button>
+            <button type="button" data-mode-group="euipo" data-mode="renewal">Verlängerung</button>
+          </div>
+          <div id="euipo-application-only" class="panel">
+            <label class="field row"><span>Elektronische Anmeldung</span><input type="checkbox" id="euipo-electronic" /></label>
+          </div>
+          <label class="field row"><span>Widerspruchsverfahren</span><input type="checkbox" id="euipo-opposition" /></label>
+          <div id="euipo-results"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>WIPO (Madrider System)</h2>
+        <p class="muted small" id="wipo-asof"></p>
+        <label class="field row">
+          <span>Berücksichtigen</span>
+          <input type="checkbox" id="wipo-enabled" />
+        </label>
+        <div id="wipo-panel" class="panel">
+          <div class="mode-toggle">
+            <button type="button" data-mode-group="wipo" data-mode="application">Anmeldung</button>
+            <button type="button" data-mode-group="wipo" data-mode="renewal">Verlängerung</button>
+          </div>
+          <div id="wipo-application-only" class="panel">
+            <label class="field row"><span>Marke in Farbe</span><input type="checkbox" id="wipo-color" /></label>
+          </div>
+          <div>
+            <p class="field-label">Benannte Länder</p>
+            <div id="wipo-countries" class="country-list"></div>
+          </div>
+          <div id="wipo-results"></div>
+          <p class="hint" id="wipo-eur-hint" style="display: none"></p>
+        </div>
+      </section>
+    </div>
+
+    <section class="card">
+      <h2>Patentanwaltliche Gebühren</h2>
+      <p class="muted small">
+        Platzhalter – bitte mit den tatsächlichen Sätzen befüllen. Änderungen werden lokal im Browser gespeichert.
+      </p>
+      <div id="attorney-inputs" class="grid-2"></div>
+      <div id="attorney-results"></div>
+    </section>
+
+    <section class="card">
+      <h2>Gesamtübersicht</h2>
+      <table class="line-items">
+        <tbody>
+          <tr><td>DPMA</td><td class="amount" id="summary-dpma"></td></tr>
+          <tr><td>EUIPO</td><td class="amount" id="summary-euipo"></td></tr>
+          <tr><td>WIPO <span class="muted small" id="summary-wipo-chf"></span></td><td class="amount" id="summary-wipo"></td></tr>
+          <tr class="subtotal"><td>Amtliche Gebühren gesamt</td><td class="amount" id="summary-official"></td></tr>
+          <tr><td>Patentanwaltliche Gebühren</td><td class="amount" id="summary-attorney"></td></tr>
+          <tr class="grand-total"><td>Gesamtsumme</td><td class="amount" id="summary-total"></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <footer class="card footer">
+      <p class="footer-title">Hinweise zu den Daten</p>
+      <ul>
+        <li id="source-dpma"></li>
+        <li id="source-euipo"></li>
+        <li>
+          <span id="source-wipo"></span>
+          Bitte vor verbindlicher Nutzung gegen den
+          <a href="https://madrid.wipo.int/feecalcapp/" target="_blank" rel="noreferrer">WIPO Fee Calculator</a>
+          prüfen.
+        </li>
+        <li>Patentanwaltliche Gebühren sind Platzhalter (0 €), bis konkrete Sätze hinterlegt werden.</li>
+        <li>Dieser Rechner dient der Orientierung und stellt keine Rechtsberatung dar.</li>
+      </ul>
+    </footer>
+  </main>
+
+  <script src="fees-data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
