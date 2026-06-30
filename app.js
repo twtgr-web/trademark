@@ -302,9 +302,9 @@ function renderLineItemsTable(container, items, currency) {
   container.appendChild(table);
 }
 
-function createOverrideField(labelText, placeholder, value, onInput) {
+function createOverrideField(labelText, placeholder, value, onInput, extraClass) {
   const wrap = document.createElement("label");
-  wrap.className = "override-field";
+  wrap.className = "override-field" + (extraClass ? " " + extraClass : "");
   const span = document.createElement("span");
   span.textContent = labelText;
   const input = document.createElement("input");
@@ -375,12 +375,18 @@ function renderWipoCountryList() {
         })
       );
       fields.appendChild(
-        createOverrideField("Vor Ort", "CHF", state.wipoLocalAttorneyOverrides[member.code], (v) => {
-          if (v === undefined) delete state.wipoLocalAttorneyOverrides[member.code];
-          else state.wipoLocalAttorneyOverrides[member.code] = v;
-          renderAttorneyResults();
-          renderSummary();
-        })
+        createOverrideField(
+          "Vor Ort (CHF)",
+          "betrag",
+          state.wipoLocalAttorneyOverrides[member.code],
+          (v) => {
+            if (v === undefined) delete state.wipoLocalAttorneyOverrides[member.code];
+            else state.wipoLocalAttorneyOverrides[member.code] = v;
+            renderAttorneyResults();
+            renderSummary();
+          },
+          "vor-ort-field"
+        )
       );
 
       row.appendChild(fields);
@@ -629,6 +635,15 @@ function init() {
 
   bindToggle("attorney-vat-enabled", "attorneyVatEnabled");
   bindNumber("attorney-vat-rate", "attorneyVatRate");
+
+  document.getElementById("jump-to-wipo-countries").addEventListener("click", () => {
+    const wipoCheckbox = document.getElementById("wipo-enabled");
+    if (!wipoCheckbox.checked) {
+      wipoCheckbox.checked = true;
+      wipoCheckbox.dispatchEvent(new Event("change"));
+    }
+    document.getElementById("wipo-countries").scrollIntoView({ behavior: "smooth", block: "center" });
+  });
 
   renderAttorneyInputs();
 
