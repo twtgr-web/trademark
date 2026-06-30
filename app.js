@@ -156,19 +156,65 @@ function calculateAttorneyFees(items, classes, designatedCountryCount) {
   return items
     .filter((item) => item.amount > 0)
     .map((item) => {
-      if (!item.perClass) {
-        if (item.id === "wipo-per-country") {
-          return { label: item.label, amount: item.amount * designatedCountryCount, currency: "EUR" };
-        }
-        return { label: item.label, amount: item.amount, currency: "EUR" };
+      if (item.scope === "perExtraClass") {
+        const extra = Math.max(0, classes - 3);
+        if (extra === 0) return null;
+        return {
+          label: `${item.label} (${extra} Klasse${extra > 1 ? "n" : ""})`,
+          amount: item.amount * extra,
+          currency: "EUR",
+        };
       }
-      const classCount = item.office === "general" ? 1 : classes[item.office];
-      return {
-        label: `${item.label} (${classCount} Klasse${classCount > 1 ? "n" : ""})`,
-        amount: item.amount * classCount,
-        currency: "EUR",
-      };
+      if (item.scope === "perCountry") {
+        if (designatedCountryCount === 0) return null;
+        return {
+          label: `${item.label} (${designatedCountryCount} Land/Länder)`,
+          amount: item.amount * designatedCountryCount,
+          currency: "EUR",
+        };
+      }
+      return { label: item.label, amount: item.amount, currency: "EUR" };
+    })
+    .filter(Boolean);
+}
+
+function calculateWipoDesignationAttorneyFees(designatedMemberCodes, mode, overrides) {
+  const items = [];
+  for (const code of designatedMemberCodes) {
+    const member = WIPO_MEMBERS.find((m) => m.code === code);
+    if (!member) continue;
+    const override = overrides[code];
+    if (override !== undefined && override !== null && !Number.isNaN(override)) {
+      items.push({ label: `Benennungshonorar – ${member.name}`, amount: override, currency: "EUR" });
+      continue;
+    }
+    const fee =
+      mode === "renewal"
+        ? member.attorneyRenewalDesignationFee ?? ATTORNEY_DEFAULT_RENEWAL_DESIGNATION_FEE_EUR
+        : member.attorneyDesignationFee ?? ATTORNEY_DEFAULT_DESIGNATION_FEE_EUR;
+    items.push({ label: `Benennungshonorar – ${member.name}`, amount: fee, currency: "EUR" });
+  }
+  return items;
+}
+
+function calculateLocalAttorneyFees(designatedMemberCodes, overrides) {
+  const items = [];
+  for (const code of designatedMemberCodes) {
+    const member = WIPO_MEMBERS.find((m) => m.code === code);
+    if (!member) continue;
+    const override = overrides[code];
+    if (override !== undefined && override !== null && !Number.isNaN(override)) {
+      items.push({ label: `Honorar Patentanwalt vor Ort – ${member.name}`, amount: override, currency: "CHF" });
+      continue;
+    }
+    if (!member.localAttorneyFee) continue;
+    items.push({
+      label: `Honorar Patentanwalt vor Ort – ${member.name}`,
+      amount: member.localAttorneyFee.amount,
+      currency: member.localAttorneyFee.currency,
     });
+  }
+  return items;
 }
 
 function sumItems(items, currency) {
@@ -217,6 +263,8 @@ const state = {
   wipoColor: false,
   wipoCountries: [],
   wipoOverrides: {},
+  wipoAttorneyDesignationOverrides: {},
+  wipoLocalAttorneyOverrides: {},
 
   attorneyItems: loadAttorneyItems(),
   attorneyVatEnabled: true,
@@ -254,6 +302,25 @@ function renderLineItemsTable(container, items, currency) {
   container.appendChild(table);
 }
 
+function createOverrideField(labelText, placeholder, value, onInput) {
+  const wrap = document.createElement("label");
+  wrap.className = "override-field";
+  const span = document.createElement("span");
+  span.textContent = labelText;
+  const input = document.createElement("input");
+  input.type = "number";
+  input.className = "override-input";
+  input.placeholder = placeholder;
+  input.value = value ?? "";
+  input.addEventListener("input", () => {
+    const v = input.value === "" ? undefined : Number(input.value);
+    onInput(v);
+  });
+  wrap.appendChild(span);
+  wrap.appendChild(input);
+  return wrap;
+}
+
 function renderWipoCountryList() {
   const container = document.getElementById("wipo-countries");
   container.innerHTML = "";
@@ -271,6 +338,8 @@ function renderWipoCountryList() {
       } else {
         state.wipoCountries = state.wipoCountries.filter((c) => c !== member.code);
         delete state.wipoOverrides[member.code];
+        delete state.wipoAttorneyDesignationOverrides[member.code];
+        delete state.wipoLocalAttorneyOverrides[member.code];
       }
       render();
     });
@@ -286,22 +355,35 @@ function renderWipoCountryList() {
     row.appendChild(label);
 
     if (checkbox.checked) {
-      const override = document.createElement("input");
-      override.type = "number";
-      override.className = "override-input";
-      override.placeholder = "CHF auto";
-      override.value = state.wipoOverrides[member.code] ?? "";
-      override.addEventListener("input", () => {
-        const v = override.value === "" ? undefined : Number(override.value);
-        if (v === undefined) {
-          delete state.wipoOverrides[member.code];
-        } else {
-          state.wipoOverrides[member.code] = v;
-        }
-        renderWipoResults();
-        renderSummary();
-      });
-      row.appendChild(override);
+      const fields = document.createElement("div");
+      fields.className = "country-override-fields";
+
+      fields.appendChild(
+        createOverrideField("Amt", "CHF auto", state.wipoOverrides[member.code], (v) => {
+          if (v === undefined) delete state.wipoOverrides[member.code];
+          else state.wipoOverrides[member.code] = v;
+          renderWipoResults();
+          renderSummary();
+        })
+      );
+      fields.appendChild(
+        createOverrideField("Honorar Best.", "EUR auto", state.wipoAttorneyDesignationOverrides[member.code], (v) => {
+          if (v === undefined) delete state.wipoAttorneyDesignationOverrides[member.code];
+          else state.wipoAttorneyDesignationOverrides[member.code] = v;
+          renderAttorneyResults();
+          renderSummary();
+        })
+      );
+      fields.appendChild(
+        createOverrideField("Vor Ort", "CHF", state.wipoLocalAttorneyOverrides[member.code], (v) => {
+          if (v === undefined) delete state.wipoLocalAttorneyOverrides[member.code];
+          else state.wipoLocalAttorneyOverrides[member.code] = v;
+          renderAttorneyResults();
+          renderSummary();
+        })
+      );
+
+      row.appendChild(fields);
     }
 
     container.appendChild(row);
@@ -311,11 +393,24 @@ function renderWipoCountryList() {
 function renderAttorneyInputs() {
   const container = document.getElementById("attorney-inputs");
   container.innerHTML = "";
+  const scopeSuffix = { perExtraClass: " (je Klasse ab der 4.)", perCountry: " (je benanntem Land)" };
+  let currentGroup = null;
+  let groupGrid = null;
   for (const item of state.attorneyItems) {
+    if (item.group !== currentGroup) {
+      currentGroup = item.group;
+      const heading = document.createElement("p");
+      heading.className = "field-label attorney-group-heading";
+      heading.textContent = currentGroup;
+      container.appendChild(heading);
+      groupGrid = document.createElement("div");
+      groupGrid.className = "grid-2";
+      container.appendChild(groupGrid);
+    }
     const field = document.createElement("label");
     field.className = "field";
     const span = document.createElement("span");
-    span.textContent = item.label + (item.perClass ? " (je Klasse)" : "");
+    span.textContent = item.label + (scopeSuffix[item.scope] || "");
     const input = document.createElement("input");
     input.type = "number";
     input.min = "0";
@@ -328,7 +423,7 @@ function renderAttorneyInputs() {
     });
     field.appendChild(span);
     field.appendChild(input);
-    container.appendChild(field);
+    groupGrid.appendChild(field);
   }
 }
 
@@ -336,6 +431,7 @@ let lastDpmaItems = [];
 let lastEuipoItems = [];
 let lastWipoItems = [];
 let lastAttorneyItems = [];
+let lastLocalAttorneyItems = [];
 
 function renderDpmaResults() {
   lastDpmaItems = state.dpmaEnabled
@@ -384,12 +480,17 @@ function renderWipoResults() {
 }
 
 function renderAttorneyResults() {
-  lastAttorneyItems = calculateAttorneyFees(
-    state.attorneyItems,
-    { dpma: state.classes, euipo: state.classes, wipo: state.classes },
-    state.wipoCountries.length
-  );
+  const computedItems = calculateAttorneyFees(state.attorneyItems, state.classes, state.wipoCountries.length);
+  const designationItems = state.wipoEnabled
+    ? calculateWipoDesignationAttorneyFees(state.wipoCountries, state.wipoMode, state.wipoAttorneyDesignationOverrides)
+    : [];
+  lastAttorneyItems = [...computedItems, ...designationItems];
   renderLineItemsTable(document.getElementById("attorney-results"), lastAttorneyItems, "EUR");
+
+  lastLocalAttorneyItems = state.wipoEnabled
+    ? calculateLocalAttorneyFees(state.wipoCountries, state.wipoLocalAttorneyOverrides)
+    : [];
+  renderLineItemsTable(document.getElementById("attorney-local-results"), lastLocalAttorneyItems, "CHF");
 
   const net = sumItems(lastAttorneyItems, "EUR");
   const vat = state.attorneyVatEnabled ? net * (state.attorneyVatRate / 100) : 0;
@@ -417,8 +518,10 @@ function renderSummary() {
   const wipoTotalEur = wipoTotalChf * state.exchangeRate;
   const attorneyNet = sumItems(lastAttorneyItems, "EUR");
   const attorneyVat = state.attorneyVatEnabled ? attorneyNet * (state.attorneyVatRate / 100) : 0;
+  const localAttorneyChf = sumItems(lastLocalAttorneyItems, "CHF");
+  const localAttorneyEur = localAttorneyChf * state.exchangeRate;
   const officialTotal = dpmaTotal + euipoTotal + wipoTotalEur;
-  const grandTotal = officialTotal + attorneyNet + attorneyVat;
+  const grandTotal = officialTotal + attorneyNet + attorneyVat + localAttorneyEur;
 
   document.getElementById("summary-dpma").textContent = formatAmount(dpmaTotal, "EUR");
   document.getElementById("summary-euipo").textContent = formatAmount(euipoTotal, "EUR");
@@ -428,6 +531,8 @@ function renderSummary() {
   document.getElementById("summary-attorney-net").textContent = formatAmount(attorneyNet, "EUR");
   document.getElementById("summary-attorney-vat").textContent = formatAmount(attorneyVat, "EUR");
   document.getElementById("summary-vat-rate-label").textContent = `(${state.attorneyVatEnabled ? state.attorneyVatRate : 0}%)`;
+  document.getElementById("summary-local-attorney").textContent = formatAmount(localAttorneyEur, "EUR");
+  document.getElementById("summary-local-attorney-chf").textContent = `(${formatAmount(localAttorneyChf, "CHF")})`;
   document.getElementById("summary-total").textContent = formatAmount(grandTotal, "EUR");
 }
 

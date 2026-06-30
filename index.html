@@ -105,11 +105,20 @@
     <section class="card">
       <h2>Patentanwaltliche Gebühren</h2>
       <p class="muted small">
-        Platzhalter – bitte mit den tatsächlichen Sätzen befüllen. Änderungen werden lokal im Browser gespeichert.
-        Beträge unten sind Netto-Beträge; die USt. wird separat aufgeschlagen.
+        Honorarsätze It. interner Gebührenliste (Stand 17.06.2025), je nach Mandat ggf. Position auf 0 setzen, falls
+        nicht zutreffend. Änderungen werden lokal im Browser gespeichert. Beträge unten sind Netto-Beträge; die USt.
+        wird separat aufgeschlagen. Vereinfachung: Es gilt durchgängig der Satz für "Marke" (nicht Kollektivmarke)
+        bei Multiclass-fähigen Ländern.
       </p>
-      <div id="attorney-inputs" class="grid-2"></div>
+      <div id="attorney-inputs"></div>
+      <p class="field-label">Benennungshonorar (je bei WIPO benanntem Land)</p>
       <div id="attorney-results"></div>
+      <p class="field-label">Honorar Patentanwalt vor Ort (Korrespondenzanwalt, je benanntem Land)</p>
+      <p class="hint">
+        Honorar des lokalen Korrespondenzanwalts im Zielland, z. B. Schweiz CHF 450,-. In CHF einzutragen (siehe
+        Eingabefelder "Vor Ort" bei den benannten Ländern oben bei WIPO). Wird ohne deutsche USt. ausgewiesen.
+      </p>
+      <div id="attorney-local-results"></div>
       <div class="grid-2 vat-controls">
         <label class="field row"><span>USt. ausweisen</span><input type="checkbox" id="attorney-vat-enabled" /></label>
         <label class="field"><span>USt.-Satz (%)</span><input type="number" id="attorney-vat-rate" min="0" step="0.1" /></label>
@@ -127,6 +136,7 @@
           <tr class="subtotal"><td>Amtliche Gebühren gesamt <span class="muted small">(keine USt.)</span></td><td class="amount" id="summary-official"></td></tr>
           <tr><td>Patentanwaltliche Gebühren (netto)</td><td class="amount" id="summary-attorney-net"></td></tr>
           <tr><td>zzgl. USt. auf Anwaltsgebühren <span class="muted small" id="summary-vat-rate-label"></span></td><td class="amount" id="summary-attorney-vat"></td></tr>
+          <tr><td>Honorar Patentanwalt vor Ort <span class="muted small" id="summary-local-attorney-chf">(keine USt.)</span></td><td class="amount" id="summary-local-attorney"></td></tr>
           <tr class="grand-total"><td>Gesamtsumme</td><td class="amount" id="summary-total"></td></tr>
         </tbody>
       </table>
@@ -143,12 +153,19 @@
           <a href="https://madrid.wipo.int/feecalcapp/" target="_blank" rel="noreferrer">WIPO Fee Calculator</a>
           prüfen.
         </li>
-        <li>Patentanwaltliche Gebühren sind Platzhalter (0 €), bis konkrete Sätze hinterlegt werden.</li>
+        <li>
+          Patentanwaltliche Gebühren basieren auf der internen Gebühren-/Honorarliste (Ausdruck vom 17.06.2025).
+          Einige Positionen (DPMA-Widerspruch, DPMA/EUIPO-Verlängerung) waren auf der Vorlage nicht eindeutig
+          zuzuordnen und stehen daher noch auf 0 €. Es gilt vereinfachend durchgängig der Satz für "Marke" bei
+          Multiclass-fähigen Ländern; abweichende Sätze für Kollektivmarken bzw. Nicht-Multiclass-Länder sind nicht
+          separat abgebildet.
+        </li>
         <li>
           Amtliche Gebühren (DPMA, EUIPO, WIPO) sind Behördengebühren und unterliegen nicht der Umsatzsteuer.
           Patentanwaltliche Gebühren sind dagegen umsatzsteuerpflichtige Dienstleistungen; angenommen wird der
           Standardsatz für Inlandsmandate – bei Auslandsmandaten (z. B. Reverse-Charge, Drittland) kann eine
-          abweichende Behandlung gelten.
+          abweichende Behandlung gelten. Das Honorar des Korrespondenzanwalts vor Ort wird ohne deutsche USt.
+          ausgewiesen.
         </li>
         <li>Dieser Rechner dient der Orientierung und stellt keine Rechtsberatung dar.</li>
       </ul>

@@ -12,10 +12,12 @@ Build-Schritt, kein Server nötig.
 - **WIPO (Madrider System)**: Grundgebühr (Schwarz-Weiß/Farbe), Zusatzgebühr je Klasse,
   Benennungsgebühren für eine Auswahl von Mitgliedsstaaten (editierbar, einige Beträge sind
   ungeprüfte Schätzwerte und entsprechend gekennzeichnet).
-- **Patentanwaltliche Gebühren**: Konfigurierbare Platzhalter-Positionen (Beratung, Recherche,
-  Bearbeitungsgebühren je Amt, Auslandskorrespondenz etc.), editierbar direkt in der App und
-  per `localStorage` im Browser gespeichert.
-- Gesamtübersicht mit Umrechnung der WIPO-Gebühren (CHF) in Euro.
+- **Patentanwaltliche Gebühren**: Honorarsätze gemäß interner Gebührenliste (Beratung,
+  Recherche, Grund-/Klassengebühren je Amt, Priorität, Veröffentlichung, Urkunde,
+  Benennungshonorar je WIPO-Land, Honorar des Korrespondenzanwalts vor Ort), editierbar
+  direkt in der App und per `localStorage` im Browser gespeichert. Inkl. USt.-Aufschlag
+  (Standard 19 %, editierbar) auf die Netto-Honorare; amtliche Gebühren sind USt.-frei.
+- Gesamtübersicht mit Umrechnung der WIPO-Gebühren und des Vor-Ort-Honorars (CHF) in Euro.
 
 Die Gebührendaten liegen gesammelt in `fees-data.js` und lassen sich dort bei
 Gebührenänderungen zentral aktualisieren, ohne die Rechenlogik (`app.js`) anfassen zu müssen.

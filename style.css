@@ -125,6 +125,18 @@ body {
   margin: 0.5rem 0 0.4rem;
 }
 
+.attorney-group-heading {
+  margin-top: 1rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--border);
+}
+
+.attorney-group-heading:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
 .panel {
   display: flex;
   flex-direction: column;
@@ -161,7 +173,7 @@ body {
 }
 
 .country-list {
-  max-height: 14rem;
+  max-height: 20rem;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -171,17 +183,37 @@ body {
 
 .country-row {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
+  flex-direction: column;
+  gap: 0.3rem;
   font-size: 0.85rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid #f4f4f5;
 }
 
-.country-row label {
+.country-row:last-child {
+  border-bottom: none;
+}
+
+.country-row > label {
   display: flex;
   align-items: center;
   gap: 0.4rem;
   flex: 1;
+}
+
+.country-override-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-left: 1.5rem;
+}
+
+.override-field {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  color: var(--muted);
 }
 
 .badge-warn {
@@ -194,7 +226,7 @@ body {
 }
 
 .override-input {
-  width: 5.5rem;
+  width: 4rem;
   text-align: right;
   padding: 0.2rem 0.4rem;
   font-size: 0.78rem;
