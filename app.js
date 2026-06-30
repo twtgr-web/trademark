@@ -219,6 +219,8 @@ const state = {
   wipoOverrides: {},
 
   attorneyItems: loadAttorneyItems(),
+  attorneyVatEnabled: true,
+  attorneyVatRate: ATTORNEY_VAT_RATE_DEFAULT,
 };
 
 // ---------------------------------------------------------------------------
@@ -388,6 +390,24 @@ function renderAttorneyResults() {
     state.wipoCountries.length
   );
   renderLineItemsTable(document.getElementById("attorney-results"), lastAttorneyItems, "EUR");
+
+  const net = sumItems(lastAttorneyItems, "EUR");
+  const vat = state.attorneyVatEnabled ? net * (state.attorneyVatRate / 100) : 0;
+  const gross = net + vat;
+
+  const breakdown = document.getElementById("attorney-vat-breakdown");
+  breakdown.innerHTML = "";
+  if (lastAttorneyItems.length > 0) {
+    const table = document.createElement("table");
+    table.className = "line-items";
+    table.innerHTML = `
+      <tbody>
+        <tr><td>Nettosumme</td><td class="amount">${formatAmount(net, "EUR")}</td></tr>
+        <tr><td>zzgl. USt. (${state.attorneyVatEnabled ? state.attorneyVatRate : 0}%)</td><td class="amount">${formatAmount(vat, "EUR")}</td></tr>
+        <tr class="subtotal"><td>Bruttosumme</td><td class="amount">${formatAmount(gross, "EUR")}</td></tr>
+      </tbody>`;
+    breakdown.appendChild(table);
+  }
 }
 
 function renderSummary() {
@@ -395,16 +415,19 @@ function renderSummary() {
   const euipoTotal = sumItems(lastEuipoItems, "EUR");
   const wipoTotalChf = sumItems(lastWipoItems, "CHF");
   const wipoTotalEur = wipoTotalChf * state.exchangeRate;
-  const attorneyTotal = sumItems(lastAttorneyItems, "EUR");
+  const attorneyNet = sumItems(lastAttorneyItems, "EUR");
+  const attorneyVat = state.attorneyVatEnabled ? attorneyNet * (state.attorneyVatRate / 100) : 0;
   const officialTotal = dpmaTotal + euipoTotal + wipoTotalEur;
-  const grandTotal = officialTotal + attorneyTotal;
+  const grandTotal = officialTotal + attorneyNet + attorneyVat;
 
   document.getElementById("summary-dpma").textContent = formatAmount(dpmaTotal, "EUR");
   document.getElementById("summary-euipo").textContent = formatAmount(euipoTotal, "EUR");
   document.getElementById("summary-wipo").textContent = formatAmount(wipoTotalEur, "EUR");
   document.getElementById("summary-wipo-chf").textContent = `(${formatAmount(wipoTotalChf, "CHF")})`;
   document.getElementById("summary-official").textContent = formatAmount(officialTotal, "EUR");
-  document.getElementById("summary-attorney").textContent = formatAmount(attorneyTotal, "EUR");
+  document.getElementById("summary-attorney-net").textContent = formatAmount(attorneyNet, "EUR");
+  document.getElementById("summary-attorney-vat").textContent = formatAmount(attorneyVat, "EUR");
+  document.getElementById("summary-vat-rate-label").textContent = `(${state.attorneyVatEnabled ? state.attorneyVatRate : 0}%)`;
   document.getElementById("summary-total").textContent = formatAmount(grandTotal, "EUR");
 }
 
@@ -498,6 +521,9 @@ function init() {
   bindToggle("euipo-opposition", "euipoOpposition");
 
   bindToggle("wipo-color", "wipoColor");
+
+  bindToggle("attorney-vat-enabled", "attorneyVatEnabled");
+  bindNumber("attorney-vat-rate", "attorneyVatRate");
 
   renderAttorneyInputs();
 

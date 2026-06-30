@@ -102,8 +102,14 @@ const WIPO_MEMBERS = [
 ];
 
 // ---------------------------------------------------------------------------
-// Patentanwaltliche Gebühren – Platzhalter, Beträge in EUR
+// Patentanwaltliche Gebühren – Platzhalter, Beträge in EUR (netto)
 // ---------------------------------------------------------------------------
+
+// Standard-USt.-Satz für Inlandsmandate. Amtliche Gebühren (DPMA/EUIPO/WIPO) sind
+// Behördengebühren und nicht umsatzsteuerpflichtig, daher gilt dieser Satz nur für die
+// patentanwaltlichen Gebühren.
+const ATTORNEY_VAT_RATE_DEFAULT = 19;
+
 const ATTORNEY_FEE_ITEMS = [
   { id: "consultation", label: "Erstberatung / Schutzrechtsstrategie", office: "general", perClass: false, amount: 0 },
   { id: "search", label: "Identitäts- und Ähnlichkeitsrecherche", office: "general", perClass: false, amount: 0 },

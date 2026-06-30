@@ -106,9 +106,15 @@
       <h2>Patentanwaltliche Gebühren</h2>
       <p class="muted small">
         Platzhalter – bitte mit den tatsächlichen Sätzen befüllen. Änderungen werden lokal im Browser gespeichert.
+        Beträge unten sind Netto-Beträge; die USt. wird separat aufgeschlagen.
       </p>
       <div id="attorney-inputs" class="grid-2"></div>
       <div id="attorney-results"></div>
+      <div class="grid-2 vat-controls">
+        <label class="field row"><span>USt. ausweisen</span><input type="checkbox" id="attorney-vat-enabled" /></label>
+        <label class="field"><span>USt.-Satz (%)</span><input type="number" id="attorney-vat-rate" min="0" step="0.1" /></label>
+      </div>
+      <div id="attorney-vat-breakdown"></div>
     </section>
 
     <section class="card">
@@ -118,8 +124,9 @@
           <tr><td>DPMA</td><td class="amount" id="summary-dpma"></td></tr>
           <tr><td>EUIPO</td><td class="amount" id="summary-euipo"></td></tr>
           <tr><td>WIPO <span class="muted small" id="summary-wipo-chf"></span></td><td class="amount" id="summary-wipo"></td></tr>
-          <tr class="subtotal"><td>Amtliche Gebühren gesamt</td><td class="amount" id="summary-official"></td></tr>
-          <tr><td>Patentanwaltliche Gebühren</td><td class="amount" id="summary-attorney"></td></tr>
+          <tr class="subtotal"><td>Amtliche Gebühren gesamt <span class="muted small">(keine USt.)</span></td><td class="amount" id="summary-official"></td></tr>
+          <tr><td>Patentanwaltliche Gebühren (netto)</td><td class="amount" id="summary-attorney-net"></td></tr>
+          <tr><td>zzgl. USt. auf Anwaltsgebühren <span class="muted small" id="summary-vat-rate-label"></span></td><td class="amount" id="summary-attorney-vat"></td></tr>
           <tr class="grand-total"><td>Gesamtsumme</td><td class="amount" id="summary-total"></td></tr>
         </tbody>
       </table>
@@ -137,6 +144,12 @@
           prüfen.
         </li>
         <li>Patentanwaltliche Gebühren sind Platzhalter (0 €), bis konkrete Sätze hinterlegt werden.</li>
+        <li>
+          Amtliche Gebühren (DPMA, EUIPO, WIPO) sind Behördengebühren und unterliegen nicht der Umsatzsteuer.
+          Patentanwaltliche Gebühren sind dagegen umsatzsteuerpflichtige Dienstleistungen; angenommen wird der
+          Standardsatz für Inlandsmandate – bei Auslandsmandaten (z. B. Reverse-Charge, Drittland) kann eine
+          abweichende Behandlung gelten.
+        </li>
         <li>Dieser Rechner dient der Orientierung und stellt keine Rechtsberatung dar.</li>
       </ul>
     </footer>
