@@ -154,7 +154,7 @@ function calculateWipo({ classes, color, mode, designatedMemberCodes, memberFeeO
 
 function calculateAttorneyFees(items, classes, designatedCountryCount) {
   return items
-    .filter((item) => item.amount > 0)
+    .filter((item) => item.enabled && item.amount > 0)
     .map((item) => {
       if (item.scope === "perExtraClass") {
         const extra = Math.max(0, classes - 3);
@@ -232,7 +232,7 @@ function loadAttorneyItems() {
     const saved = JSON.parse(raw);
     return ATTORNEY_FEE_ITEMS.map((item) => {
       const match = saved.find((s) => s.id === item.id);
-      return match ? { ...item, amount: Number(match.amount) || 0 } : { ...item };
+      return match ? { ...item, amount: Number(match.amount) || 0, enabled: Boolean(match.enabled) } : { ...item };
     });
   } catch {
     return ATTORNEY_FEE_ITEMS.map((i) => ({ ...i }));
@@ -414,9 +414,21 @@ function renderAttorneyInputs() {
       container.appendChild(groupGrid);
     }
     const field = document.createElement("label");
-    field.className = "field";
+    field.className = "field attorney-item";
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = Boolean(item.enabled);
+    checkbox.addEventListener("change", () => {
+      item.enabled = checkbox.checked;
+      saveAttorneyItems(state.attorneyItems);
+      renderAttorneyResults();
+      renderSummary();
+    });
+
     const span = document.createElement("span");
     span.textContent = item.label + (scopeSuffix[item.scope] || "");
+
     const input = document.createElement("input");
     input.type = "number";
     input.min = "0";
@@ -427,6 +439,8 @@ function renderAttorneyInputs() {
       renderAttorneyResults();
       renderSummary();
     });
+
+    field.appendChild(checkbox);
     field.appendChild(span);
     field.appendChild(input);
     groupGrid.appendChild(field);

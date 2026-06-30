@@ -136,34 +136,34 @@ const ATTORNEY_DEFAULT_RENEWAL_DESIGNATION_FEE_EUR = 145;
 // scope: "flat" (einmalig), "perExtraClass" (je Klasse ab der 4.), "perCountry"
 // (je bei WIPO benanntem Land).
 const ATTORNEY_FEE_ITEMS = [
-  { id: "consultation", label: "Erstberatung / Schutzrechtsstrategie", group: "Allgemein", scope: "flat", amount: 0 },
-  { id: "search", label: "Identitäts- und Ähnlichkeitsrecherche", group: "Allgemein", scope: "flat", amount: 0 },
-  { id: "monitoring", label: "Markenüberwachung (pro Jahr)", group: "Allgemein", scope: "flat", amount: 0 },
+  { id: "consultation", label: "Erstberatung / Schutzrechtsstrategie", group: "Allgemein", scope: "flat", enabled: false, amount: 0 },
+  { id: "search", label: "Identitäts- und Ähnlichkeitsrecherche", group: "Allgemein", scope: "flat", enabled: false, amount: 0 },
+  { id: "monitoring", label: "Markenüberwachung (pro Jahr)", group: "Allgemein", scope: "flat", enabled: false, amount: 0 },
 
-  { id: "europa-priority", label: "Beanspruchung einer Priorität", group: "Marke Europa (DPMA/EUIPO)", scope: "flat", amount: 135 },
-  { id: "europa-publication", label: "Bericht über die Veröffentlichung der Markenanmeldung", group: "Marke Europa (DPMA/EUIPO)", scope: "flat", amount: 180 },
-  { id: "europa-certificate", label: "Übersendung der Urkunde", group: "Marke Europa (DPMA/EUIPO)", scope: "flat", amount: 220 },
+  { id: "europa-priority", label: "Beanspruchung einer Priorität", group: "Marke Europa (DPMA/EUIPO)", scope: "flat", enabled: false, amount: 135 },
+  { id: "europa-publication", label: "Bericht über die Veröffentlichung der Markenanmeldung", group: "Marke Europa (DPMA/EUIPO)", scope: "flat", enabled: false, amount: 180 },
+  { id: "europa-certificate", label: "Übersendung der Urkunde", group: "Marke Europa (DPMA/EUIPO)", scope: "flat", enabled: false, amount: 220 },
 
-  { id: "dpma-filing", label: "DPMA: Grundgebühr Anmeldung (bis 3 Klassen)", group: "DPMA", scope: "flat", amount: 620 },
-  { id: "dpma-class", label: "DPMA: Klassengebühr ab der 4. Klasse", group: "DPMA", scope: "perExtraClass", amount: 90 },
-  { id: "dpma-opposition", label: "DPMA: Widerspruchsverfahren – Bearbeitung", group: "DPMA", scope: "flat", amount: 0 },
-  { id: "dpma-renewal", label: "DPMA: Verlängerung – Bearbeitung", group: "DPMA", scope: "flat", amount: 0 },
+  { id: "dpma-filing", label: "DPMA: Grundgebühr Anmeldung (bis 3 Klassen)", group: "DPMA", scope: "flat", enabled: false, amount: 620 },
+  { id: "dpma-class", label: "DPMA: Klassengebühr ab der 4. Klasse", group: "DPMA", scope: "perExtraClass", enabled: false, amount: 90 },
+  { id: "dpma-opposition", label: "DPMA: Widerspruchsverfahren – Bearbeitung", group: "DPMA", scope: "flat", enabled: false, amount: 0 },
+  { id: "dpma-renewal", label: "DPMA: Verlängerung – Bearbeitung", group: "DPMA", scope: "flat", enabled: false, amount: 0 },
 
-  { id: "euipo-filing", label: "EUIPO: Grundgebühr Anmeldung (bis 3 Klassen)", group: "EUIPO", scope: "flat", amount: 620 },
-  { id: "euipo-class", label: "EUIPO: Klassengebühr ab der 4. Klasse", group: "EUIPO", scope: "perExtraClass", amount: 90 },
-  { id: "euipo-opposition", label: "EUIPO: Widerspruchsverfahren – Bearbeitung", group: "EUIPO", scope: "flat", amount: 0 },
-  { id: "euipo-renewal", label: "EUIPO: Verlängerung – Bearbeitung", group: "EUIPO", scope: "flat", amount: 0 },
+  { id: "euipo-filing", label: "EUIPO: Grundgebühr Anmeldung (bis 3 Klassen)", group: "EUIPO", scope: "flat", enabled: false, amount: 620 },
+  { id: "euipo-class", label: "EUIPO: Klassengebühr ab der 4. Klasse", group: "EUIPO", scope: "perExtraClass", enabled: false, amount: 90 },
+  { id: "euipo-opposition", label: "EUIPO: Widerspruchsverfahren – Bearbeitung", group: "EUIPO", scope: "flat", enabled: false, amount: 0 },
+  { id: "euipo-renewal", label: "EUIPO: Verlängerung – Bearbeitung", group: "EUIPO", scope: "flat", enabled: false, amount: 0 },
 
-  { id: "wipo-filing", label: "WIPO: Grundgebühr Registrierung IR-Marke (bis 3 Klassen)", group: "WIPO – Anmeldung (IR-Marke)", scope: "flat", amount: 940 },
-  { id: "wipo-class", label: "WIPO: Zusatzgebühr ab der 4. Warenklasse", group: "WIPO – Anmeldung (IR-Marke)", scope: "perExtraClass", amount: 125 },
-  { id: "wipo-priority", label: "WIPO: Beanspruchung einer Priorität (mit Beleg: 220 €)", group: "WIPO – Anmeldung (IR-Marke)", scope: "flat", amount: 140 },
-  { id: "wipo-certificate", label: "WIPO: Übersendung der Urkunde", group: "WIPO – Anmeldung (IR-Marke)", scope: "flat", amount: 280 },
-  { id: "wipo-completion", label: "WIPO: Abschluss Schutzzulassungsverfahren (Pauschale)", group: "WIPO – Anmeldung (IR-Marke)", scope: "flat", amount: 135 },
-  { id: "wipo-takeover", label: "WIPO: Übernahme Vertretung nach Schutzzulassung", group: "WIPO – Anmeldung (IR-Marke)", scope: "flat", amount: 340 },
-  { id: "wipo-foreign-coordination", label: "WIPO: Vertretung bei Schutzzulassungsverfahren im Ausland je Land (zzgl. Aufwand)", group: "WIPO – Anmeldung (IR-Marke)", scope: "perCountry", amount: 280 },
+  { id: "wipo-filing", label: "WIPO: Grundgebühr Registrierung IR-Marke (bis 3 Klassen)", group: "WIPO – Anmeldung (IR-Marke)", scope: "flat", enabled: false, amount: 940 },
+  { id: "wipo-class", label: "WIPO: Zusatzgebühr ab der 4. Warenklasse", group: "WIPO – Anmeldung (IR-Marke)", scope: "perExtraClass", enabled: false, amount: 125 },
+  { id: "wipo-priority", label: "WIPO: Beanspruchung einer Priorität (mit Beleg: 220 €)", group: "WIPO – Anmeldung (IR-Marke)", scope: "flat", enabled: false, amount: 140 },
+  { id: "wipo-certificate", label: "WIPO: Übersendung der Urkunde", group: "WIPO – Anmeldung (IR-Marke)", scope: "flat", enabled: false, amount: 280 },
+  { id: "wipo-completion", label: "WIPO: Abschluss Schutzzulassungsverfahren (Pauschale)", group: "WIPO – Anmeldung (IR-Marke)", scope: "flat", enabled: false, amount: 135 },
+  { id: "wipo-takeover", label: "WIPO: Übernahme Vertretung nach Schutzzulassung", group: "WIPO – Anmeldung (IR-Marke)", scope: "flat", enabled: false, amount: 340 },
+  { id: "wipo-foreign-coordination", label: "WIPO: Vertretung bei Schutzzulassungsverfahren im Ausland je Land (zzgl. Aufwand)", group: "WIPO – Anmeldung (IR-Marke)", scope: "perCountry", enabled: false, amount: 280 },
 
-  { id: "wipo-renewal", label: "WIPO: Grundgebühr Verlängerung (bis 3 Klassen)", group: "WIPO – Verlängerung (IR-Marke)", scope: "flat", amount: 620 },
-  { id: "wipo-renewal-class", label: "WIPO: Verlängerung – Zusatzgebühr je weitere Klasse (ab 3.)", group: "WIPO – Verlängerung (IR-Marke)", scope: "perExtraClass", amount: 105 },
+  { id: "wipo-renewal", label: "WIPO: Grundgebühr Verlängerung (bis 3 Klassen)", group: "WIPO – Verlängerung (IR-Marke)", scope: "flat", enabled: false, amount: 620 },
+  { id: "wipo-renewal-class", label: "WIPO: Verlängerung – Zusatzgebühr je weitere Klasse (ab 3.)", group: "WIPO – Verlängerung (IR-Marke)", scope: "perExtraClass", enabled: false, amount: 105 },
 ];
 
 // Standard-USt.-Satz für Inlandsmandate. Amtliche Gebühren (DPMA/EUIPO/WIPO) sind

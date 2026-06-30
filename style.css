@@ -113,6 +113,18 @@ body {
   margin: 0.35rem 0;
 }
 
+.attorney-item span {
+  flex: 1;
+}
+
+.attorney-item:has(input[type="checkbox"]:not(:checked)) span {
+  color: var(--muted);
+}
+
+.attorney-item input[type="checkbox"] {
+  flex: none;
+}
+
 .vat-controls {
   margin-top: 0.75rem;
   padding-top: 0.75rem;
