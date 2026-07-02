@@ -259,6 +259,14 @@ body {
   white-space: nowrap;
 }
 
+.stale-banner {
+  background: var(--warn-bg);
+  color: var(--warn-text);
+  border: 1px solid #f5cf87;
+  font-size: 0.85rem;
+  padding: 0.8rem 1rem;
+}
+
 .override-input {
   width: 4rem;
   text-align: right;

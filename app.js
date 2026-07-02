@@ -927,6 +927,50 @@ function bindSectionToggle(checkboxId, panelId, key) {
   });
 }
 
+const STALE_AFTER_MONTHS = 6;
+
+function monthsSince(dateStr) {
+  const then = new Date(dateStr);
+  const now = new Date();
+  return (now.getFullYear() - then.getFullYear()) * 12 + (now.getMonth() - then.getMonth());
+}
+
+function isStale(dateStr) {
+  return monthsSince(dateStr) >= STALE_AFTER_MONTHS;
+}
+
+function checkDataStaleness() {
+  const offices = [
+    { name: "DPMA", asOf: DPMA_FEES.asOf, elId: "dpma-asof" },
+    { name: "EUIPO", asOf: EUIPO_FEES.asOf, elId: "euipo-asof" },
+    { name: "WIPO", asOf: WIPO_BASE_FEES.asOf, elId: "wipo-asof" },
+    { name: "UKIPO", asOf: UKIPO_FEES.asOf, elId: "ukipo-asof" },
+  ];
+
+  const staleNames = [];
+  for (const office of offices) {
+    if (!isStale(office.asOf)) continue;
+    staleNames.push(office.name);
+    const el = document.getElementById(office.elId);
+    const badge = document.createElement("span");
+    badge.className = "badge-warn";
+    badge.textContent = "⚠ Stand prüfen";
+    badge.title = `Stand ${office.asOf} – älter als ${STALE_AFTER_MONTHS} Monate. Bitte gegen die offizielle Quelle prüfen.`;
+    el.appendChild(document.createTextNode(" "));
+    el.appendChild(badge);
+  }
+
+  const banner = document.getElementById("stale-banner");
+  if (staleNames.length > 0) {
+    banner.textContent = `⚠ Die hinterlegten Gebührendaten für ${staleNames.join(
+      ", "
+    )} sind älter als ${STALE_AFTER_MONTHS} Monate und wurden seither möglicherweise nicht mehr aktualisiert. Bitte vor verbindlicher Nutzung gegen die offiziellen Quellen (siehe „Hinweise zu den Daten“ unten) prüfen.`;
+    banner.style.display = "block";
+  } else {
+    banner.style.display = "none";
+  }
+}
+
 function init() {
   document.getElementById("dpma-asof").textContent = `Stand ${DPMA_FEES.asOf} · dpma.de`;
   document.getElementById("euipo-asof").textContent = `Stand ${EUIPO_FEES.asOf} · euipo.europa.eu`;
@@ -936,6 +980,7 @@ function init() {
   document.getElementById("source-wipo").textContent = `WIPO: Grundgebühren amtlich, Stand ${WIPO_BASE_FEES.asOf} (${WIPO_BASE_FEES.sourceUrl}). Mit ⚠ markierte Benennungsgebühren sind ungeprüfte Schätzwerte.`;
   document.getElementById("ukipo-asof").textContent = `Stand ${UKIPO_FEES.asOf}`;
   document.getElementById("source-ukipo").textContent = `UKIPO: Amtliche Gebühr und Service Charge des UK-Korrespondenzanwalts, Stand ${UKIPO_FEES.asOf} (${UKIPO_FEES.note})`;
+  checkDataStaleness();
 
   bindNumber("classes", "classes");
   bindNumber("exchange-rate", "exchangeRate");
