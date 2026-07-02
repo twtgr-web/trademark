@@ -18,6 +18,11 @@ Build-Schritt, kein Server nötig.
   direkt in der App und per `localStorage` im Browser gespeichert. Inkl. USt.-Aufschlag
   (Standard 19 %, editierbar) auf die Netto-Honorare; amtliche Gebühren sind USt.-frei.
 - Gesamtübersicht mit Umrechnung der WIPO-Gebühren und des Vor-Ort-Honorars (CHF) in Euro.
+- **Drucken / PDF**: Button "Übersicht drucken / als PDF speichern" erzeugt eine saubere,
+  auf die aktuelle Eingabe reduzierte Druckansicht (nur aktivierte Ämter/Positionen, keine
+  Formularelemente) über die native Browser-Druckfunktion – im Druckdialog als Ziel
+  "Als PDF speichern" wählen. Optional lässt sich vorher eine Bezeichnung/Referenz (z. B.
+  Markenname) eintragen, die im Dokument erscheint.
 
 Die Gebührendaten liegen gesammelt in `fees-data.js` und lassen sich dort bei
 Gebührenänderungen zentral aktualisieren, ohne die Rechenlogik (`app.js`) anfassen zu müssen.

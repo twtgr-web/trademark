@@ -9,13 +9,21 @@
 </head>
 <body>
   <main class="page">
-    <header class="page-header">
+    <header class="page-header no-print">
       <h1>Gebührenrechner für Markenanmeldungen</h1>
       <p class="muted">
         Amtliche Gebühren von DPMA, EUIPO und WIPO (Madrider System) sowie patentanwaltliche Gebühren auf einen
         Blick. Alle Werte sind Schätzungen und ersetzen keine verbindliche Auskunft.
       </p>
     </header>
+
+    <section class="card no-print print-bar">
+      <label class="field">
+        <span>Bezeichnung / Referenz (optional, erscheint im Dokument)</span>
+        <input type="text" id="report-title" placeholder="z. B. Markenname oder Mandat" />
+      </label>
+      <button type="button" id="print-button" class="print-button">🖨 Übersicht drucken / als PDF speichern</button>
+    </section>
 
     <section class="card">
       <h2>Allgemeine Angaben</h2>
@@ -173,6 +181,8 @@
         <li>Dieser Rechner dient der Orientierung und stellt keine Rechtsberatung dar.</li>
       </ul>
     </footer>
+
+    <div id="print-view"></div>
   </main>
 
   <script src="fees-data.js"></script>

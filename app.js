@@ -244,6 +244,7 @@ function saveAttorneyItems(items) {
 }
 
 const state = {
+  reportTitle: "",
   classes: 3,
   exchangeRate: 1.06,
 
@@ -566,6 +567,152 @@ function render() {
 }
 
 // ---------------------------------------------------------------------------
+// Druckansicht
+// ---------------------------------------------------------------------------
+
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function describeDpmaOptions() {
+  const parts = [state.dpmaMode === "application" ? "Anmeldung" : "Verlängerung"];
+  if (state.dpmaMode === "application") {
+    parts.push(state.dpmaElectronic ? "elektronisch" : "Papieranmeldung");
+    if (state.dpmaAccelerated) parts.push("beschleunigte Prüfung");
+  }
+  if (state.dpmaOpposition) parts.push("Widerspruchsverfahren");
+  return parts.join(" · ");
+}
+
+function describeEuipoOptions() {
+  const parts = [state.euipoMode === "application" ? "Anmeldung" : "Verlängerung"];
+  if (state.euipoMode === "application") {
+    parts.push(state.euipoElectronic ? "elektronisch" : "Papieranmeldung");
+  }
+  if (state.euipoOpposition) parts.push("Widerspruchsverfahren");
+  return parts.join(" · ");
+}
+
+function describeWipoOptions() {
+  const parts = [state.wipoMode === "application" ? "Anmeldung" : "Verlängerung"];
+  if (state.wipoMode === "application") parts.push(state.wipoColor ? "Marke in Farbe" : "Schwarz-Weiß");
+  const countryNames = state.wipoCountries
+    .map((code) => WIPO_MEMBERS.find((m) => m.code === code)?.name)
+    .filter(Boolean);
+  if (countryNames.length > 0) parts.push(`benannte Länder: ${countryNames.join(", ")}`);
+  return parts.join(" · ");
+}
+
+function printLineItemsTable(items, currency) {
+  if (items.length === 0) return "";
+  const rows = items
+    .map((i) => `<tr><td>${escapeHtml(i.label)}</td><td class="amount">${formatAmount(i.amount, i.currency)}</td></tr>`)
+    .join("");
+  const total = sumItems(items, currency);
+  return `<table class="line-items"><tbody>${rows}<tr class="subtotal"><td>Zwischensumme</td><td class="amount">${formatAmount(
+    total,
+    currency
+  )}</td></tr></tbody></table>`;
+}
+
+function printSection(title, subtitle, tableHtml) {
+  if (!tableHtml) return "";
+  return `
+    <section class="print-section">
+      <h2>${escapeHtml(title)}</h2>
+      ${subtitle ? `<p class="print-subtitle-small">${escapeHtml(subtitle)}</p>` : ""}
+      ${tableHtml}
+    </section>
+  `;
+}
+
+function renderPrintView() {
+  const container = document.getElementById("print-view");
+  const now = new Date().toLocaleDateString("de-DE", { year: "numeric", month: "long", day: "numeric" });
+  const title = state.reportTitle.trim();
+  const sections = [];
+
+  sections.push(`
+    <header class="print-header">
+      <h1>Gebührenübersicht Markenanmeldung</h1>
+      ${title ? `<p class="print-subtitle">${escapeHtml(title)}</p>` : ""}
+      <p class="print-meta">Erstellt am ${now} · Waren-/Dienstleistungsklassen: ${state.classes} · Wechselkurs CHF → EUR: ${state.exchangeRate}</p>
+    </header>
+  `);
+
+  if (state.dpmaEnabled) {
+    sections.push(printSection("DPMA (Deutschland)", describeDpmaOptions(), printLineItemsTable(lastDpmaItems, "EUR")));
+  }
+  if (state.euipoEnabled) {
+    sections.push(printSection("EUIPO (Unionsmarke)", describeEuipoOptions(), printLineItemsTable(lastEuipoItems, "EUR")));
+  }
+  if (state.wipoEnabled) {
+    const wipoTable = printLineItemsTable(lastWipoItems, "CHF");
+    const wipoChf = sumItems(lastWipoItems, "CHF");
+    const wipoNote = wipoTable ? `<p class="print-subtitle-small">≈ ${formatAmount(wipoChf * state.exchangeRate, "EUR")} bei Kurs ${state.exchangeRate}</p>` : "";
+    sections.push(printSection("WIPO (Madrider System)", describeWipoOptions(), wipoTable + wipoNote));
+  }
+
+  const attorneyTable = printLineItemsTable(lastAttorneyItems, "EUR");
+  if (attorneyTable) {
+    const net = sumItems(lastAttorneyItems, "EUR");
+    const vat = state.attorneyVatEnabled ? net * (state.attorneyVatRate / 100) : 0;
+    const vatTable = `<table class="line-items"><tbody>
+      <tr><td>Nettosumme</td><td class="amount">${formatAmount(net, "EUR")}</td></tr>
+      <tr><td>zzgl. USt. (${state.attorneyVatEnabled ? state.attorneyVatRate : 0}%)</td><td class="amount">${formatAmount(vat, "EUR")}</td></tr>
+      <tr class="subtotal"><td>Bruttosumme</td><td class="amount">${formatAmount(net + vat, "EUR")}</td></tr>
+    </tbody></table>`;
+    sections.push(printSection("Patentanwaltliche Gebühren (netto)", "", attorneyTable + vatTable));
+  }
+
+  const localTable = printLineItemsTable(lastLocalAttorneyItems, "CHF");
+  if (localTable) {
+    sections.push(printSection("Honorar Patentanwalt vor Ort", "Korrespondenzanwalt, ohne deutsche USt.", localTable));
+  }
+
+  const dpmaTotal = sumItems(lastDpmaItems, "EUR");
+  const euipoTotal = sumItems(lastEuipoItems, "EUR");
+  const wipoTotalChf = sumItems(lastWipoItems, "CHF");
+  const wipoTotalEur = wipoTotalChf * state.exchangeRate;
+  const attorneyNet = sumItems(lastAttorneyItems, "EUR");
+  const attorneyVat = state.attorneyVatEnabled ? attorneyNet * (state.attorneyVatRate / 100) : 0;
+  const localAttorneyEur = sumItems(lastLocalAttorneyItems, "CHF") * state.exchangeRate;
+  const officialTotal = dpmaTotal + euipoTotal + wipoTotalEur;
+  const grandTotal = officialTotal + attorneyNet + attorneyVat + localAttorneyEur;
+
+  sections.push(`
+    <section class="print-section">
+      <h2>Gesamtübersicht</h2>
+      <table class="line-items"><tbody>
+        <tr><td>DPMA</td><td class="amount">${formatAmount(dpmaTotal, "EUR")}</td></tr>
+        <tr><td>EUIPO</td><td class="amount">${formatAmount(euipoTotal, "EUR")}</td></tr>
+        <tr><td>WIPO</td><td class="amount">${formatAmount(wipoTotalEur, "EUR")}</td></tr>
+        <tr class="subtotal"><td>Amtliche Gebühren gesamt (keine USt.)</td><td class="amount">${formatAmount(officialTotal, "EUR")}</td></tr>
+        <tr><td>Patentanwaltliche Gebühren (netto)</td><td class="amount">${formatAmount(attorneyNet, "EUR")}</td></tr>
+        <tr><td>zzgl. USt. auf Anwaltsgebühren</td><td class="amount">${formatAmount(attorneyVat, "EUR")}</td></tr>
+        <tr><td>Honorar Patentanwalt vor Ort</td><td class="amount">${formatAmount(localAttorneyEur, "EUR")}</td></tr>
+        <tr class="grand-total"><td>Gesamtsumme</td><td class="amount">${formatAmount(grandTotal, "EUR")}</td></tr>
+      </tbody></table>
+    </section>
+  `);
+
+  sections.push(`
+    <footer class="print-footer">
+      <p><strong>Hinweise</strong></p>
+      <ul>
+        <li>Amtliche Gebühren (DPMA, EUIPO, WIPO) sind Behördengebühren und nicht umsatzsteuerpflichtig.</li>
+        <li>Patentanwaltliche Gebühren basieren auf der internen Gebühren-/Honorarliste (Stand 17.06.2025) und sind Nettobeträge zzgl. USt.</li>
+        <li>Diese Übersicht dient der Orientierung und stellt keine verbindliche Auskunft oder Rechtsberatung dar.</li>
+      </ul>
+    </footer>
+  `);
+
+  container.innerHTML = sections.join("\n");
+}
+
+// ---------------------------------------------------------------------------
 // Wiring
 // ---------------------------------------------------------------------------
 
@@ -657,6 +804,15 @@ function init() {
       wipoCheckbox.dispatchEvent(new Event("change"));
     }
     document.getElementById("wipo-countries").scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+
+  document.getElementById("report-title").addEventListener("input", (e) => {
+    state.reportTitle = e.target.value;
+  });
+
+  document.getElementById("print-button").addEventListener("click", () => {
+    renderPrintView();
+    window.print();
   });
 
   renderAttorneyInputs();
