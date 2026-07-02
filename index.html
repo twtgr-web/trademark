@@ -155,6 +155,25 @@
           <p class="hint" id="ukipo-eur-hint" style="display: none"></p>
         </div>
       </section>
+
+      <section class="card">
+        <h2>Schweiz (IGE, Direktanmeldung)</h2>
+        <p class="muted small" id="ch-asof"></p>
+        <label class="field row">
+          <span>Berücksichtigen</span>
+          <input type="checkbox" id="ch-enabled" />
+        </label>
+        <div id="ch-panel" class="panel">
+          <p class="hint">
+            Direktanmeldung beim IGE (nicht über WIPO/Madrid). Nur Anmeldegebühren hinterlegt, keine Verlängerung.
+          </p>
+          <p class="field-label">Amtliche Gebühr</p>
+          <div id="ch-official-results"></div>
+          <p class="field-label">Vertreterhonorar vor Ort</p>
+          <div id="ch-attorney-results"></div>
+          <p class="hint" id="ch-eur-hint" style="display: none"></p>
+        </div>
+      </section>
     </div>
 
     <section class="card">
@@ -198,6 +217,7 @@
           <tr><td>EUIPO</td><td class="amount" id="summary-euipo"></td></tr>
           <tr><td>WIPO <span class="muted small" id="summary-wipo-chf"></span></td><td class="amount" id="summary-wipo"></td></tr>
           <tr><td>UKIPO <span class="muted small" id="summary-ukipo-gbp"></span></td><td class="amount" id="summary-ukipo"></td></tr>
+          <tr><td>Schweiz (IGE) <span class="muted small" id="summary-ch-chf"></span></td><td class="amount" id="summary-ch"></td></tr>
           <tr class="subtotal"><td>Amtliche Gebühren gesamt <span class="muted small">(keine USt.)</span></td><td class="amount" id="summary-official"></td></tr>
           <tr><td>Patentanwaltliche Gebühren (netto)</td><td class="amount" id="summary-attorney-net"></td></tr>
           <tr><td>zzgl. USt. auf Anwaltsgebühren <span class="muted small" id="summary-vat-rate-label"></span></td><td class="amount" id="summary-attorney-vat"></td></tr>
@@ -219,12 +239,13 @@
           prüfen.
         </li>
         <li id="source-ukipo"></li>
+        <li id="source-ch"></li>
         <li>
-          Amtliche Gebühren (DPMA, EUIPO, WIPO, UKIPO) sind Behördengebühren und unterliegen nicht der
+          Amtliche Gebühren (DPMA, EUIPO, WIPO, UKIPO, Schweiz/IGE) sind Behördengebühren und unterliegen nicht der
           Umsatzsteuer. Patentanwaltliche Gebühren sind dagegen umsatzsteuerpflichtige Dienstleistungen; angenommen
           wird der Standardsatz für Inlandsmandate – bei Auslandsmandaten (z. B. Reverse-Charge, Drittland) kann
-          eine abweichende Behandlung gelten. Das Honorar des Korrespondenzanwalts vor Ort (WIPO-Benennungen sowie
-          UKIPO-Service-Charge) wird ohne deutsche USt.
+          eine abweichende Behandlung gelten. Das Honorar des Korrespondenzanwalts/Vertreters vor Ort
+          (WIPO-Benennungen, UKIPO-Service-Charge sowie Schweizer Vertreterhonorar) wird ohne deutsche USt.
           ausgewiesen.
         </li>
         <li>Dieser Rechner dient der Orientierung und stellt keine Rechtsberatung dar.</li>

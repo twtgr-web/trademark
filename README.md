@@ -1,8 +1,8 @@
 # Markenanmeldung – Gebührenrechner
 
-Rechner für die amtlichen Gebühren von DPMA, EUIPO, WIPO (Madrider System) und UKIPO sowie
-patentanwaltliche Gebühren bei Markenanmeldungen. Reines HTML/CSS/JavaScript, kein
-Build-Schritt, kein Server nötig.
+Rechner für die amtlichen Gebühren von DPMA, EUIPO, WIPO (Madrider System), UKIPO und der
+Schweiz (IGE) sowie patentanwaltliche Gebühren bei Markenanmeldungen. Reines HTML/CSS/JavaScript,
+kein Build-Schritt, kein Server nötig.
 
 ## Funktionen
 
@@ -14,14 +14,16 @@ Build-Schritt, kein Server nötig.
   ungeprüfte Schätzwerte und entsprechend gekennzeichnet).
 - **UKIPO (Vereinigtes Königreich)**: Direktanmeldung (nicht über WIPO/Madrid) mit amtlicher
   Gebühr und Service Charge des UK-Korrespondenzanwalts in GBP, Umrechnung in Euro.
+- **Schweiz (IGE)**: Direktanmeldung (nicht über WIPO/Madrid) mit amtlicher Gebühr (inkl. 3
+  Klassen, Klassengebühr ab der 4.) und pauschalem Vertreterhonorar vor Ort in CHF.
 - **Patentanwaltliche Gebühren**: Voreingestellte Honorarsätze (Beratung, Recherche,
   Grund-/Klassengebühren je Amt, Priorität, Veröffentlichung, Urkunde, Benennungshonorar je
   WIPO-Land, Honorar des Korrespondenzanwalts vor Ort), per Checkbox je Position ein-/ausblendbar
   (Standard: aus), editierbar direkt in der App und per `localStorage` im Browser gespeichert.
   Inkl. USt.-Aufschlag (Standard 19 %, editierbar) auf die Netto-Honorare; amtliche Gebühren
   sind USt.-frei.
-- Gesamtübersicht mit Umrechnung der WIPO-/UKIPO-Gebühren und des Vor-Ort-Honorars (CHF/GBP) in
-  Euro.
+- Gesamtübersicht mit Umrechnung der WIPO-/UKIPO-/Schweiz-Gebühren und des Vor-Ort-/
+  Vertreterhonorars (CHF/GBP) in Euro.
 - **Drucken / PDF**: Button "Übersicht drucken / als PDF speichern" erzeugt eine saubere,
   auf die aktuelle Eingabe reduzierte Druckansicht (nur aktivierte Ämter/Positionen, keine
   Formularelemente) über die native Browser-Druckfunktion – im Druckdialog als Ziel
@@ -30,9 +32,9 @@ Build-Schritt, kein Server nötig.
 - **Mandantenansicht**: Checkbox, die im PDF die einzelnen Honorarpositionen zu einer
   Pauschalsumme zusammenfasst, ohne die interne Kostenstruktur offenzulegen. Amtliche
   Gebühren bleiben weiterhin aufgeschlüsselt.
-- **Kostenvergleich**: Vergleicht (nur amtliche Gebühren) die Direktanmeldung bei EUIPO/UKIPO
-  mit einer IR-Marke über WIPO für dieselbe Länderabdeckung, jeweils inkl. DPMA als
-  notwendiger Basismarke.
+- **Kostenvergleich**: Vergleicht (nur amtliche Gebühren) die Direktanmeldung bei EUIPO/UKIPO/
+  Schweiz mit einer IR-Marke über WIPO für dieselbe Länderabdeckung, jeweils inkl. DPMA oder
+  EUIPO als notwendiger Basismarke.
 - **Rechtlicher Hinweis zur Basismarke**: Warnt, wenn WIPO/Madrid aktiviert ist, aber weder
   DPMA noch EUIPO als Basismarke ausgewählt sind.
 - **Veraltete-Daten-Warnung**: Zeigt ein Banner sowie Badges an den jeweiligen Ämtern, sobald

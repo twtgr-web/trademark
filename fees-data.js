@@ -50,6 +50,20 @@ const UKIPO_FEES = {
 };
 
 // ---------------------------------------------------------------------------
+// Schweiz (IGE) – Direktanmeldung, Beträge in CHF
+// ---------------------------------------------------------------------------
+// Keine Anmeldung über WIPO/Madrid, sondern direkt national beim IGE. Bislang nur
+// Anmeldegebühren bekannt (keine Verlängerung). Das Vertreterhonorar vor Ort ist als fixer
+// Pauschalbetrag angegeben, nicht klassenabhängig.
+const CH_FEES = {
+  officialClass1to3: 350,
+  officialAdditionalClassFee: 100,
+  attorneyLocalFee: 450,
+  asOf: "2026-07-02",
+  note: "Direktanmeldung Schweiz (nicht über WIPO/Madrid als CH-Benennung).",
+};
+
+// ---------------------------------------------------------------------------
 // WIPO / Madrider System – Beträge in CHF
 // ---------------------------------------------------------------------------
 const WIPO_BASE_FEES = {
