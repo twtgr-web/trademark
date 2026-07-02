@@ -833,6 +833,88 @@ function updateModeVisibility() {
   document.getElementById("wipo-application-only").style.display = state.wipoMode === "application" ? "flex" : "none";
 }
 
+function setModeUI(groupName, mode) {
+  document.querySelectorAll(`[data-mode-group="${groupName}"]`).forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.mode === mode);
+  });
+}
+
+function resetForm() {
+  const confirmed = window.confirm(
+    "Formular für eine neue Marke zurücksetzen? Alle aktuellen Eingaben (Klassen, Ämter, Länder, angehakte Honorarpositionen) gehen verloren. Die hinterlegten Honorarbeträge selbst bleiben erhalten."
+  );
+  if (!confirmed) return;
+
+  state.reportTitle = "";
+  state.classes = 3;
+  state.exchangeRate = 1.06;
+  state.gbpExchangeRate = 1.17;
+
+  state.dpmaEnabled = true;
+  state.dpmaMode = "application";
+  state.dpmaElectronic = true;
+  state.dpmaAccelerated = false;
+  state.dpmaOpposition = false;
+
+  state.euipoEnabled = true;
+  state.euipoMode = "application";
+  state.euipoElectronic = true;
+  state.euipoOpposition = false;
+
+  state.wipoEnabled = false;
+  state.wipoMode = "application";
+  state.wipoColor = false;
+  state.wipoCountries = [];
+  state.wipoOverrides = {};
+  state.wipoAttorneyDesignationOverrides = {};
+  state.wipoLocalAttorneyOverrides = {};
+
+  state.ukipoEnabled = false;
+
+  state.attorneyItems.forEach((item) => {
+    item.enabled = false;
+  });
+  saveAttorneyItems(state.attorneyItems);
+
+  state.attorneyVatEnabled = true;
+  state.attorneyVatRate = ATTORNEY_VAT_RATE_DEFAULT;
+
+  document.getElementById("report-title").value = "";
+  document.getElementById("classes").value = state.classes;
+  document.getElementById("exchange-rate").value = state.exchangeRate;
+  document.getElementById("gbp-exchange-rate").value = state.gbpExchangeRate;
+
+  document.getElementById("dpma-enabled").checked = true;
+  document.getElementById("dpma-panel").style.display = "flex";
+  setModeUI("dpma", "application");
+  document.getElementById("dpma-electronic").checked = true;
+  document.getElementById("dpma-accelerated").checked = false;
+  document.getElementById("dpma-opposition").checked = false;
+
+  document.getElementById("euipo-enabled").checked = true;
+  document.getElementById("euipo-panel").style.display = "flex";
+  setModeUI("euipo", "application");
+  document.getElementById("euipo-electronic").checked = true;
+  document.getElementById("euipo-opposition").checked = false;
+
+  document.getElementById("wipo-enabled").checked = false;
+  document.getElementById("wipo-panel").style.display = "none";
+  setModeUI("wipo", "application");
+  document.getElementById("wipo-color").checked = false;
+
+  document.getElementById("ukipo-enabled").checked = false;
+  document.getElementById("ukipo-panel").style.display = "none";
+
+  document.getElementById("attorney-vat-enabled").checked = true;
+  document.getElementById("attorney-vat-rate").value = state.attorneyVatRate;
+
+  updateModeVisibility();
+  renderAttorneyInputs();
+  render();
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
 function bindSectionToggle(checkboxId, panelId, key) {
   const el = document.getElementById(checkboxId);
   const panel = document.getElementById(panelId);
@@ -898,6 +980,8 @@ function init() {
     renderPrintView();
     window.print();
   });
+
+  document.getElementById("reset-button").addEventListener("click", resetForm);
 
   renderAttorneyInputs();
 

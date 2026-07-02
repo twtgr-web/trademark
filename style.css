@@ -353,6 +353,12 @@ table.line-items .grand-total td {
   font-size: 0.9rem;
 }
 
+.button-group {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
 .print-button {
   padding: 0.6rem 1rem;
   background: var(--accent);
@@ -366,6 +372,12 @@ table.line-items .grand-total td {
 
 .print-button:hover {
   opacity: 0.9;
+}
+
+.print-button.secondary {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
 }
 
 #print-view {
