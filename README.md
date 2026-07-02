@@ -1,6 +1,6 @@
 # Markenanmeldung – Gebührenrechner
 
-Rechner für die amtlichen Gebühren von DPMA, EUIPO und WIPO (Madrider System) sowie
+Rechner für die amtlichen Gebühren von DPMA, EUIPO, WIPO (Madrider System) und UKIPO sowie
 patentanwaltliche Gebühren bei Markenanmeldungen. Reines HTML/CSS/JavaScript, kein
 Build-Schritt, kein Server nötig.
 
@@ -12,12 +12,16 @@ Build-Schritt, kein Server nötig.
 - **WIPO (Madrider System)**: Grundgebühr (Schwarz-Weiß/Farbe), Zusatzgebühr je Klasse,
   Benennungsgebühren für eine Auswahl von Mitgliedsstaaten (editierbar, einige Beträge sind
   ungeprüfte Schätzwerte und entsprechend gekennzeichnet).
-- **Patentanwaltliche Gebühren**: Honorarsätze gemäß interner Gebührenliste (Beratung,
-  Recherche, Grund-/Klassengebühren je Amt, Priorität, Veröffentlichung, Urkunde,
-  Benennungshonorar je WIPO-Land, Honorar des Korrespondenzanwalts vor Ort), editierbar
-  direkt in der App und per `localStorage` im Browser gespeichert. Inkl. USt.-Aufschlag
-  (Standard 19 %, editierbar) auf die Netto-Honorare; amtliche Gebühren sind USt.-frei.
-- Gesamtübersicht mit Umrechnung der WIPO-Gebühren und des Vor-Ort-Honorars (CHF) in Euro.
+- **UKIPO (Vereinigtes Königreich)**: Direktanmeldung (nicht über WIPO/Madrid) mit amtlicher
+  Gebühr und Service Charge des UK-Korrespondenzanwalts in GBP, Umrechnung in Euro.
+- **Patentanwaltliche Gebühren**: Voreingestellte Honorarsätze (Beratung, Recherche,
+  Grund-/Klassengebühren je Amt, Priorität, Veröffentlichung, Urkunde, Benennungshonorar je
+  WIPO-Land, Honorar des Korrespondenzanwalts vor Ort), per Checkbox je Position ein-/ausblendbar
+  (Standard: aus), editierbar direkt in der App und per `localStorage` im Browser gespeichert.
+  Inkl. USt.-Aufschlag (Standard 19 %, editierbar) auf die Netto-Honorare; amtliche Gebühren
+  sind USt.-frei.
+- Gesamtübersicht mit Umrechnung der WIPO-/UKIPO-Gebühren und des Vor-Ort-Honorars (CHF/GBP) in
+  Euro.
 - **Drucken / PDF**: Button "Übersicht drucken / als PDF speichern" erzeugt eine saubere,
   auf die aktuelle Eingabe reduzierte Druckansicht (nur aktivierte Ämter/Positionen, keine
   Formularelemente) über die native Browser-Druckfunktion – im Druckdialog als Ziel

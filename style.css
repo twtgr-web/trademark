@@ -69,14 +69,14 @@ body {
   gap: 0.5rem 2rem;
 }
 
-.grid-3 {
+.grid-offices {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 1.25rem;
 }
 
 @media (max-width: 900px) {
-  .grid-3,
+  .grid-offices,
   .grid-2 {
     grid-template-columns: 1fr;
   }
@@ -380,22 +380,12 @@ table.line-items .grand-total td {
 }
 
 @media print {
-  body * {
-    visibility: hidden;
-  }
-
-  #print-view,
-  #print-view * {
-    visibility: visible;
+  #app-view {
+    display: none !important;
   }
 
   #print-view {
     display: block;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    padding: 0;
   }
 
   .print-header {

@@ -9,6 +9,7 @@
 </head>
 <body>
   <main class="page">
+  <div id="app-view">
     <header class="page-header no-print">
       <h1>Gebührenrechner für Markenanmeldungen</h1>
       <p class="muted">
@@ -36,14 +37,18 @@
           <span>Wechselkurs CHF → EUR</span>
           <input type="number" id="exchange-rate" min="0" step="0.01" />
         </label>
+        <label class="field">
+          <span>Wechselkurs GBP → EUR</span>
+          <input type="number" id="gbp-exchange-rate" min="0" step="0.01" />
+        </label>
       </div>
       <p class="hint">
-        Die Klassenzahl gilt einheitlich für DPMA, EUIPO und WIPO. Der Wechselkurs dient nur der Umrechnung der
-        CHF-Gebühren der WIPO für die Gesamtsumme und kann manuell angepasst werden.
+        Die Klassenzahl gilt einheitlich für DPMA, EUIPO, WIPO und UKIPO. Die Wechselkurse dienen nur der Umrechnung
+        der CHF- bzw. GBP-Beträge für die Gesamtsumme und können manuell angepasst werden.
       </p>
     </section>
 
-    <div class="grid-3">
+    <div class="grid-offices">
       <section class="card">
         <h2>DPMA (Deutschland)</h2>
         <p class="muted small" id="dpma-asof"></p>
@@ -108,13 +113,33 @@
           <p class="hint" id="wipo-eur-hint" style="display: none"></p>
         </div>
       </section>
+
+      <section class="card">
+        <h2>UKIPO (Vereinigtes Königreich)</h2>
+        <p class="muted small" id="ukipo-asof"></p>
+        <label class="field row">
+          <span>Berücksichtigen</span>
+          <input type="checkbox" id="ukipo-enabled" />
+        </label>
+        <div id="ukipo-panel" class="panel">
+          <p class="hint">
+            Direktanmeldung beim UKIPO (nicht über WIPO/Madrid). Nur Anmeldegebühren hinterlegt, keine
+            Verlängerung.
+          </p>
+          <p class="field-label">Amtliche Gebühr</p>
+          <div id="ukipo-official-results"></div>
+          <p class="field-label">Honorar UK-Patentanwalt vor Ort</p>
+          <div id="ukipo-attorney-results"></div>
+          <p class="hint" id="ukipo-eur-hint" style="display: none"></p>
+        </div>
+      </section>
     </div>
 
     <section class="card">
       <h2>Patentanwaltliche Gebühren</h2>
       <p class="muted small">
-        Honorarsätze lt. interner Gebührenliste (Stand 17.06.2025). Nur angehakte Positionen fließen in die Summe
-        ein – Häkchen bei den im jeweiligen Mandat zutreffenden Posten setzen, Beträge bei Bedarf anpassen.
+        Voreingestellte Honorarsätze. Nur angehakte Positionen fließen in die Summe ein – Häkchen bei den im
+        jeweiligen Mandat zutreffenden Posten setzen, Beträge bei Bedarf anpassen.
         Änderungen werden lokal im Browser gespeichert. Beträge unten sind Netto-Beträge; die USt. wird separat
         aufgeschlagen. Vereinfachung: Es gilt durchgängig der Satz für "Marke" (nicht Kollektivmarke) bei
         Multiclass-fähigen Ländern.
@@ -122,12 +147,13 @@
       <div id="attorney-inputs"></div>
       <p class="field-label">Benennungshonorar (je bei WIPO benanntem Land)</p>
       <div id="attorney-results"></div>
-      <p class="field-label">Honorar Patentanwalt vor Ort (Korrespondenzanwalt, je benanntem Land)</p>
+      <p class="field-label">Honorar Patentanwalt vor Ort (Korrespondenzanwalt)</p>
       <p class="hint">
-        So eintragen: 1) Bei der WIPO-Karte oben "Berücksichtigen" aktivieren. 2) Unter "Benannte Länder" das
-        Zielland ankreuzen (z. B. Schweiz). 3) Im dann erscheinenden Feld <strong>"Vor Ort"</strong> neben dem Land
-        den Betrag in CHF eintragen (z. B. Schweiz: 450). Wird ohne deutsche USt. ausgewiesen.
+        Für WIPO-Benennungen: 1) Bei der WIPO-Karte oben "Berücksichtigen" aktivieren. 2) Unter "Benannte Länder"
+        das Zielland ankreuzen (z. B. Schweiz). 3) Im dann erscheinenden Feld <strong>"Vor Ort"</strong> neben dem
+        Land den Betrag in CHF eintragen (z. B. Schweiz: 450).
         <button type="button" id="jump-to-wipo-countries" class="jump-link">↑ WIPO aktivieren &amp; zur Länderauswahl springen</button>
+        Für UKIPO wird das Honorar automatisch aus der UKIPO-Karte übernommen. Alles ohne deutsche USt. ausgewiesen.
       </p>
       <div id="attorney-local-results"></div>
       <div class="grid-2 vat-controls">
@@ -144,6 +170,7 @@
           <tr><td>DPMA</td><td class="amount" id="summary-dpma"></td></tr>
           <tr><td>EUIPO</td><td class="amount" id="summary-euipo"></td></tr>
           <tr><td>WIPO <span class="muted small" id="summary-wipo-chf"></span></td><td class="amount" id="summary-wipo"></td></tr>
+          <tr><td>UKIPO <span class="muted small" id="summary-ukipo-gbp"></span></td><td class="amount" id="summary-ukipo"></td></tr>
           <tr class="subtotal"><td>Amtliche Gebühren gesamt <span class="muted small">(keine USt.)</span></td><td class="amount" id="summary-official"></td></tr>
           <tr><td>Patentanwaltliche Gebühren (netto)</td><td class="amount" id="summary-attorney-net"></td></tr>
           <tr><td>zzgl. USt. auf Anwaltsgebühren <span class="muted small" id="summary-vat-rate-label"></span></td><td class="amount" id="summary-attorney-vat"></td></tr>
@@ -164,23 +191,19 @@
           <a href="https://madrid.wipo.int/feecalcapp/" target="_blank" rel="noreferrer">WIPO Fee Calculator</a>
           prüfen.
         </li>
+        <li id="source-ukipo"></li>
         <li>
-          Patentanwaltliche Gebühren basieren auf der internen Gebühren-/Honorarliste (Ausdruck vom 17.06.2025).
-          Einige Positionen (DPMA-Widerspruch, DPMA/EUIPO-Verlängerung) waren auf der Vorlage nicht eindeutig
-          zuzuordnen und stehen daher noch auf 0 €. Es gilt vereinfachend durchgängig der Satz für "Marke" bei
-          Multiclass-fähigen Ländern; abweichende Sätze für Kollektivmarken bzw. Nicht-Multiclass-Länder sind nicht
-          separat abgebildet.
-        </li>
-        <li>
-          Amtliche Gebühren (DPMA, EUIPO, WIPO) sind Behördengebühren und unterliegen nicht der Umsatzsteuer.
-          Patentanwaltliche Gebühren sind dagegen umsatzsteuerpflichtige Dienstleistungen; angenommen wird der
-          Standardsatz für Inlandsmandate – bei Auslandsmandaten (z. B. Reverse-Charge, Drittland) kann eine
-          abweichende Behandlung gelten. Das Honorar des Korrespondenzanwalts vor Ort wird ohne deutsche USt.
+          Amtliche Gebühren (DPMA, EUIPO, WIPO, UKIPO) sind Behördengebühren und unterliegen nicht der
+          Umsatzsteuer. Patentanwaltliche Gebühren sind dagegen umsatzsteuerpflichtige Dienstleistungen; angenommen
+          wird der Standardsatz für Inlandsmandate – bei Auslandsmandaten (z. B. Reverse-Charge, Drittland) kann
+          eine abweichende Behandlung gelten. Das Honorar des Korrespondenzanwalts vor Ort (WIPO-Benennungen sowie
+          UKIPO-Service-Charge) wird ohne deutsche USt.
           ausgewiesen.
         </li>
         <li>Dieser Rechner dient der Orientierung und stellt keine Rechtsberatung dar.</li>
       </ul>
     </footer>
+  </div>
 
     <div id="print-view"></div>
   </main>

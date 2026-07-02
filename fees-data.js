@@ -36,6 +36,20 @@ const EUIPO_FEES = {
 };
 
 // ---------------------------------------------------------------------------
+// UKIPO (UK Intellectual Property Office) – Direktanmeldung, Beträge in GBP
+// ---------------------------------------------------------------------------
+// Keine Anmeldung über WIPO/Madrid, sondern direkt national beim UKIPO. Bislang nur
+// Anmeldegebühren bekannt (keine Verlängerung).
+const UKIPO_FEES = {
+  officialClass1: 205,
+  officialAdditionalClassFee: 60,
+  attorneyClass1: 520,
+  attorneyAdditionalClassFee: 140,
+  asOf: "2026-07-02",
+  note: "Direktanmeldung UK (nicht über WIPO/Madrid als GB-Benennung).",
+};
+
+// ---------------------------------------------------------------------------
 // WIPO / Madrider System – Beträge in CHF
 // ---------------------------------------------------------------------------
 const WIPO_BASE_FEES = {

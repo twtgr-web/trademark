@@ -4,9 +4,12 @@ const STORAGE_KEY = "trademark-fee-calculator:attorney-fees";
 
 const eur = new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" });
 const chf = new Intl.NumberFormat("de-DE", { style: "currency", currency: "CHF" });
+const gbp = new Intl.NumberFormat("de-DE", { style: "currency", currency: "GBP" });
 
 function formatAmount(amount, currency) {
-  return currency === "CHF" ? chf.format(amount) : eur.format(amount);
+  if (currency === "CHF") return chf.format(amount);
+  if (currency === "GBP") return gbp.format(amount);
+  return eur.format(amount);
 }
 
 // ---------------------------------------------------------------------------
@@ -152,6 +155,34 @@ function calculateWipo({ classes, color, mode, designatedMemberCodes, memberFeeO
   return items;
 }
 
+function calculateUkipoOfficial(classes) {
+  const c = Math.max(1, classes);
+  const items = [{ label: "Anmeldegebühr (1. Klasse)", amount: UKIPO_FEES.officialClass1, currency: "GBP" }];
+  const extra = c - 1;
+  if (extra > 0) {
+    items.push({
+      label: `Klassengebühr (${extra} weitere Klasse${extra > 1 ? "n" : ""} à ${UKIPO_FEES.officialAdditionalClassFee} GBP)`,
+      amount: extra * UKIPO_FEES.officialAdditionalClassFee,
+      currency: "GBP",
+    });
+  }
+  return items;
+}
+
+function calculateUkipoAttorney(classes) {
+  const c = Math.max(1, classes);
+  const items = [{ label: "Service Charge (1. Klasse)", amount: UKIPO_FEES.attorneyClass1, currency: "GBP" }];
+  const extra = c - 1;
+  if (extra > 0) {
+    items.push({
+      label: `Service Charge (${extra} weitere Klasse${extra > 1 ? "n" : ""} à ${UKIPO_FEES.attorneyAdditionalClassFee} GBP)`,
+      amount: extra * UKIPO_FEES.attorneyAdditionalClassFee,
+      currency: "GBP",
+    });
+  }
+  return items;
+}
+
 function calculateAttorneyFees(items, classes, designatedCountryCount) {
   return items
     .filter((item) => item.enabled && item.amount > 0)
@@ -247,6 +278,7 @@ const state = {
   reportTitle: "",
   classes: 3,
   exchangeRate: 1.06,
+  gbpExchangeRate: 1.17,
 
   dpmaEnabled: true,
   dpmaMode: "application",
@@ -266,6 +298,8 @@ const state = {
   wipoOverrides: {},
   wipoAttorneyDesignationOverrides: {},
   wipoLocalAttorneyOverrides: {},
+
+  ukipoEnabled: false,
 
   attorneyItems: loadAttorneyItems(),
   attorneyVatEnabled: true,
@@ -451,6 +485,8 @@ function renderAttorneyInputs() {
 let lastDpmaItems = [];
 let lastEuipoItems = [];
 let lastWipoItems = [];
+let lastUkipoOfficialItems = [];
+let lastUkipoAttorneyItems = [];
 let lastAttorneyItems = [];
 let lastLocalAttorneyItems = [];
 
@@ -500,6 +536,22 @@ function renderWipoResults() {
   }
 }
 
+function renderUkipoResults() {
+  lastUkipoOfficialItems = state.ukipoEnabled ? calculateUkipoOfficial(state.classes) : [];
+  lastUkipoAttorneyItems = state.ukipoEnabled ? calculateUkipoAttorney(state.classes) : [];
+  renderLineItemsTable(document.getElementById("ukipo-official-results"), lastUkipoOfficialItems, "GBP");
+  renderLineItemsTable(document.getElementById("ukipo-attorney-results"), lastUkipoAttorneyItems, "GBP");
+
+  const gbpTotal = sumItems(lastUkipoOfficialItems, "GBP") + sumItems(lastUkipoAttorneyItems, "GBP");
+  const hint = document.getElementById("ukipo-eur-hint");
+  if (lastUkipoOfficialItems.length > 0) {
+    hint.textContent = `≈ ${formatAmount(gbpTotal * state.gbpExchangeRate, "EUR")} bei Kurs ${state.gbpExchangeRate} (Amt + Anwalt vor Ort)`;
+    hint.style.display = "block";
+  } else {
+    hint.style.display = "none";
+  }
+}
+
 function renderAttorneyResults() {
   const computedItems = calculateAttorneyFees(state.attorneyItems, state.classes, state.wipoCountries.length);
   const designationItems = state.wipoEnabled
@@ -537,29 +589,39 @@ function renderSummary() {
   const euipoTotal = sumItems(lastEuipoItems, "EUR");
   const wipoTotalChf = sumItems(lastWipoItems, "CHF");
   const wipoTotalEur = wipoTotalChf * state.exchangeRate;
+  const ukipoOfficialGbp = sumItems(lastUkipoOfficialItems, "GBP");
+  const ukipoOfficialEur = ukipoOfficialGbp * state.gbpExchangeRate;
+  const ukipoAttorneyGbp = sumItems(lastUkipoAttorneyItems, "GBP");
+  const ukipoAttorneyEur = ukipoAttorneyGbp * state.gbpExchangeRate;
   const attorneyNet = sumItems(lastAttorneyItems, "EUR");
   const attorneyVat = state.attorneyVatEnabled ? attorneyNet * (state.attorneyVatRate / 100) : 0;
   const localAttorneyChf = sumItems(lastLocalAttorneyItems, "CHF");
-  const localAttorneyEur = localAttorneyChf * state.exchangeRate;
-  const officialTotal = dpmaTotal + euipoTotal + wipoTotalEur;
+  const localAttorneyEur = localAttorneyChf * state.exchangeRate + ukipoAttorneyEur;
+  const officialTotal = dpmaTotal + euipoTotal + wipoTotalEur + ukipoOfficialEur;
   const grandTotal = officialTotal + attorneyNet + attorneyVat + localAttorneyEur;
 
   document.getElementById("summary-dpma").textContent = formatAmount(dpmaTotal, "EUR");
   document.getElementById("summary-euipo").textContent = formatAmount(euipoTotal, "EUR");
   document.getElementById("summary-wipo").textContent = formatAmount(wipoTotalEur, "EUR");
   document.getElementById("summary-wipo-chf").textContent = `(${formatAmount(wipoTotalChf, "CHF")})`;
+  document.getElementById("summary-ukipo").textContent = formatAmount(ukipoOfficialEur, "EUR");
+  document.getElementById("summary-ukipo-gbp").textContent = `(${formatAmount(ukipoOfficialGbp, "GBP")})`;
   document.getElementById("summary-official").textContent = formatAmount(officialTotal, "EUR");
   document.getElementById("summary-attorney-net").textContent = formatAmount(attorneyNet, "EUR");
   document.getElementById("summary-attorney-vat").textContent = formatAmount(attorneyVat, "EUR");
   document.getElementById("summary-vat-rate-label").textContent = `(${state.attorneyVatEnabled ? state.attorneyVatRate : 0}%)`;
   document.getElementById("summary-local-attorney").textContent = formatAmount(localAttorneyEur, "EUR");
-  document.getElementById("summary-local-attorney-chf").textContent = `(${formatAmount(localAttorneyChf, "CHF")})`;
+  document.getElementById("summary-local-attorney-chf").textContent =
+    ukipoAttorneyGbp > 0
+      ? `(${formatAmount(localAttorneyChf, "CHF")} + ${formatAmount(ukipoAttorneyGbp, "GBP")}, keine USt.)`
+      : `(${formatAmount(localAttorneyChf, "CHF")}, keine USt.)`;
   document.getElementById("summary-total").textContent = formatAmount(grandTotal, "EUR");
 }
 
 function render() {
   renderDpmaResults();
   renderEuipoResults();
+  renderUkipoResults();
   renderWipoCountryList();
   renderWipoResults();
   renderAttorneyResults();
@@ -654,6 +716,21 @@ function renderPrintView() {
     const wipoNote = wipoTable ? `<p class="print-subtitle-small">≈ ${formatAmount(wipoChf * state.exchangeRate, "EUR")} bei Kurs ${state.exchangeRate}</p>` : "";
     sections.push(printSection("WIPO (Madrider System)", describeWipoOptions(), wipoTable + wipoNote));
   }
+  if (state.ukipoEnabled) {
+    const officialTable = printLineItemsTable(lastUkipoOfficialItems, "GBP");
+    const attorneyGbpTable = printLineItemsTable(lastUkipoAttorneyItems, "GBP");
+    const gbpTotal = sumItems(lastUkipoOfficialItems, "GBP") + sumItems(lastUkipoAttorneyItems, "GBP");
+    const ukipoNote = officialTable
+      ? `<p class="print-subtitle-small">≈ ${formatAmount(gbpTotal * state.gbpExchangeRate, "EUR")} bei Kurs ${state.gbpExchangeRate} (Amt + Anwalt vor Ort)</p>`
+      : "";
+    sections.push(
+      printSection(
+        "UKIPO (Vereinigtes Königreich, Direktanmeldung)",
+        "Amtliche Gebühr",
+        officialTable + (attorneyGbpTable ? `<p class="print-subtitle-small">Honorar UK-Patentanwalt vor Ort</p>${attorneyGbpTable}` : "") + ukipoNote
+      )
+    );
+  }
 
   const attorneyTable = printLineItemsTable(lastAttorneyItems, "EUR");
   if (attorneyTable) {
@@ -676,10 +753,12 @@ function renderPrintView() {
   const euipoTotal = sumItems(lastEuipoItems, "EUR");
   const wipoTotalChf = sumItems(lastWipoItems, "CHF");
   const wipoTotalEur = wipoTotalChf * state.exchangeRate;
+  const ukipoOfficialEur = sumItems(lastUkipoOfficialItems, "GBP") * state.gbpExchangeRate;
+  const ukipoAttorneyEur = sumItems(lastUkipoAttorneyItems, "GBP") * state.gbpExchangeRate;
   const attorneyNet = sumItems(lastAttorneyItems, "EUR");
   const attorneyVat = state.attorneyVatEnabled ? attorneyNet * (state.attorneyVatRate / 100) : 0;
-  const localAttorneyEur = sumItems(lastLocalAttorneyItems, "CHF") * state.exchangeRate;
-  const officialTotal = dpmaTotal + euipoTotal + wipoTotalEur;
+  const localAttorneyEur = sumItems(lastLocalAttorneyItems, "CHF") * state.exchangeRate + ukipoAttorneyEur;
+  const officialTotal = dpmaTotal + euipoTotal + wipoTotalEur + ukipoOfficialEur;
   const grandTotal = officialTotal + attorneyNet + attorneyVat + localAttorneyEur;
 
   sections.push(`
@@ -689,6 +768,7 @@ function renderPrintView() {
         <tr><td>DPMA</td><td class="amount">${formatAmount(dpmaTotal, "EUR")}</td></tr>
         <tr><td>EUIPO</td><td class="amount">${formatAmount(euipoTotal, "EUR")}</td></tr>
         <tr><td>WIPO</td><td class="amount">${formatAmount(wipoTotalEur, "EUR")}</td></tr>
+        <tr><td>UKIPO</td><td class="amount">${formatAmount(ukipoOfficialEur, "EUR")}</td></tr>
         <tr class="subtotal"><td>Amtliche Gebühren gesamt (keine USt.)</td><td class="amount">${formatAmount(officialTotal, "EUR")}</td></tr>
         <tr><td>Patentanwaltliche Gebühren (netto)</td><td class="amount">${formatAmount(attorneyNet, "EUR")}</td></tr>
         <tr><td>zzgl. USt. auf Anwaltsgebühren</td><td class="amount">${formatAmount(attorneyVat, "EUR")}</td></tr>
@@ -702,8 +782,8 @@ function renderPrintView() {
     <footer class="print-footer">
       <p><strong>Hinweise</strong></p>
       <ul>
-        <li>Amtliche Gebühren (DPMA, EUIPO, WIPO) sind Behördengebühren und nicht umsatzsteuerpflichtig.</li>
-        <li>Patentanwaltliche Gebühren basieren auf der internen Gebühren-/Honorarliste (Stand 17.06.2025) und sind Nettobeträge zzgl. USt.</li>
+        <li>Amtliche Gebühren (DPMA, EUIPO, WIPO, UKIPO) sind Behördengebühren und nicht umsatzsteuerpflichtig.</li>
+        <li>Patentanwaltliche Gebühren sind Nettobeträge zzgl. USt.</li>
         <li>Diese Übersicht dient der Orientierung und stellt keine verbindliche Auskunft oder Rechtsberatung dar.</li>
       </ul>
     </footer>
@@ -772,13 +852,17 @@ function init() {
   document.getElementById("source-dpma").textContent = `DPMA: Amtliche Gebühren, Stand ${DPMA_FEES.asOf} (${DPMA_FEES.sourceUrl}).`;
   document.getElementById("source-euipo").textContent = `EUIPO: Amtliche Gebühren, Stand ${EUIPO_FEES.asOf} (${EUIPO_FEES.sourceUrl}).`;
   document.getElementById("source-wipo").textContent = `WIPO: Grundgebühren amtlich, Stand ${WIPO_BASE_FEES.asOf} (${WIPO_BASE_FEES.sourceUrl}). Mit ⚠ markierte Benennungsgebühren sind ungeprüfte Schätzwerte.`;
+  document.getElementById("ukipo-asof").textContent = `Stand ${UKIPO_FEES.asOf}`;
+  document.getElementById("source-ukipo").textContent = `UKIPO: Amtliche Gebühr und Service Charge des UK-Korrespondenzanwalts, Stand ${UKIPO_FEES.asOf} (${UKIPO_FEES.note})`;
 
   bindNumber("classes", "classes");
   bindNumber("exchange-rate", "exchangeRate");
+  bindNumber("gbp-exchange-rate", "gbpExchangeRate");
 
   bindSectionToggle("dpma-enabled", "dpma-panel", "dpmaEnabled");
   bindSectionToggle("euipo-enabled", "euipo-panel", "euipoEnabled");
   bindSectionToggle("wipo-enabled", "wipo-panel", "wipoEnabled");
+  bindSectionToggle("ukipo-enabled", "ukipo-panel", "ukipoEnabled");
 
   bindModeToggle("dpma", "dpmaMode");
   bindModeToggle("euipo", "euipoMode");
