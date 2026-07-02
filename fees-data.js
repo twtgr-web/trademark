@@ -138,8 +138,7 @@ const ATTORNEY_DEFAULT_RENEWAL_DESIGNATION_FEE_EUR = 145;
 // ---------------------------------------------------------------------------
 // Patentanwaltliche Gebühren – Beträge in EUR (netto)
 // ---------------------------------------------------------------------------
-// Quelle: interne Gebühren-/Honorarliste "TSP-010X-XA/Gebühren", Ausdruck vom 17.06.2025
-// (Abschnitt II. Marken + WIPO-Marke). Vereinfachungen gegenüber der Originalliste:
+// Vereinfachungen gegenüber der zugrunde liegenden Honorarliste:
 // - Es wird durchgängig der Satz für "Marke" (nicht Kollektivmarke) und für
 //   Multiclass-fähige Länder verwendet; abweichende Sätze für Kollektivmarken bzw.
 //   Nicht-Multiclass-Länder sind in der Originalliste höher und hier nicht separat
