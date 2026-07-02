@@ -1,6 +1,7 @@
 "use strict";
 
-const STORAGE_KEY = "trademark-fee-calculator:attorney-fees";
+const CASES_STORAGE_KEY = "trademark-fee-calculator:cases";
+const LEGACY_ATTORNEY_STORAGE_KEY = "trademark-fee-calculator:attorney-fees";
 
 const eur = new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" });
 const chf = new Intl.NumberFormat("de-DE", { style: "currency", currency: "CHF" });
@@ -256,55 +257,96 @@ function sumItems(items, currency) {
 // State
 // ---------------------------------------------------------------------------
 
-function loadAttorneyItems() {
+function createDefaultAttorneyItems() {
+  return ATTORNEY_FEE_ITEMS.map((i) => ({ ...i }));
+}
+
+// Liest die vor der Mehrfach-Fälle-Verwaltung verwendete, einzelne Honorar-Speicherung
+// (falls vorhanden), damit bestehende Anpassungen beim ersten Laden als Startpunkt für
+// "Fall 1" übernommen werden, statt verloren zu gehen.
+function loadLegacyAttorneyItems() {
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return ATTORNEY_FEE_ITEMS.map((i) => ({ ...i }));
+    const raw = window.localStorage.getItem(LEGACY_ATTORNEY_STORAGE_KEY);
+    if (!raw) return null;
     const saved = JSON.parse(raw);
     return ATTORNEY_FEE_ITEMS.map((item) => {
       const match = saved.find((s) => s.id === item.id);
       return match ? { ...item, amount: Number(match.amount) || 0, enabled: Boolean(match.enabled) } : { ...item };
     });
   } catch {
-    return ATTORNEY_FEE_ITEMS.map((i) => ({ ...i }));
+    return null;
   }
 }
 
-function saveAttorneyItems(items) {
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+function createDefaultCaseState(attorneyItems) {
+  return {
+    reportTitle: "",
+    classes: 3,
+    exchangeRate: 1.06,
+    gbpExchangeRate: 1.17,
+
+    dpmaEnabled: true,
+    dpmaMode: "application",
+    dpmaElectronic: true,
+    dpmaAccelerated: false,
+    dpmaOpposition: false,
+
+    euipoEnabled: true,
+    euipoMode: "application",
+    euipoElectronic: true,
+    euipoOpposition: false,
+
+    wipoEnabled: false,
+    wipoMode: "application",
+    wipoColor: false,
+    wipoCountries: [],
+    wipoOverrides: {},
+    wipoAttorneyDesignationOverrides: {},
+    wipoLocalAttorneyOverrides: {},
+
+    ukipoEnabled: false,
+
+    attorneyItems: attorneyItems || createDefaultAttorneyItems(),
+    attorneyVatEnabled: true,
+    attorneyVatRate: ATTORNEY_VAT_RATE_DEFAULT,
+
+    clientView: false,
+  };
 }
 
-const state = {
-  reportTitle: "",
-  classes: 3,
-  exchangeRate: 1.06,
-  gbpExchangeRate: 1.17,
+function generateCaseId() {
+  return "case-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 7);
+}
 
-  dpmaEnabled: true,
-  dpmaMode: "application",
-  dpmaElectronic: true,
-  dpmaAccelerated: false,
-  dpmaOpposition: false,
+function loadCasesFromStorage() {
+  try {
+    const raw = window.localStorage.getItem(CASES_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.cases) && parsed.cases.length > 0) {
+        return parsed;
+      }
+    }
+  } catch {
+    // Fällt unten auf einen frischen Standard-Fall zurück.
+  }
 
-  euipoEnabled: true,
-  euipoMode: "application",
-  euipoElectronic: true,
-  euipoOpposition: false,
+  const initialCase = { id: generateCaseId(), state: createDefaultCaseState(loadLegacyAttorneyItems()) };
+  return { activeCaseId: initialCase.id, cases: [initialCase] };
+}
 
-  wipoEnabled: false,
-  wipoMode: "application",
-  wipoColor: false,
-  wipoCountries: [],
-  wipoOverrides: {},
-  wipoAttorneyDesignationOverrides: {},
-  wipoLocalAttorneyOverrides: {},
+const casesData = loadCasesFromStorage();
+const cases = casesData.cases;
+let activeCaseId = cases.some((c) => c.id === casesData.activeCaseId) ? casesData.activeCaseId : cases[0].id;
+let state = cases.find((c) => c.id === activeCaseId).state;
 
-  ukipoEnabled: false,
+function persistCases() {
+  window.localStorage.setItem(CASES_STORAGE_KEY, JSON.stringify({ activeCaseId, cases }));
+}
 
-  attorneyItems: loadAttorneyItems(),
-  attorneyVatEnabled: true,
-  attorneyVatRate: ATTORNEY_VAT_RATE_DEFAULT,
-};
+function caseLabel(c) {
+  return (c.state.reportTitle && c.state.reportTitle.trim()) || `Fall ${cases.indexOf(c) + 1}`;
+}
 
 // ---------------------------------------------------------------------------
 // Rendering
@@ -456,7 +498,6 @@ function renderAttorneyInputs() {
     checkbox.checked = Boolean(item.enabled);
     checkbox.addEventListener("change", () => {
       item.enabled = checkbox.checked;
-      saveAttorneyItems(state.attorneyItems);
       renderAttorneyResults();
       renderSummary();
     });
@@ -470,7 +511,6 @@ function renderAttorneyInputs() {
     input.value = item.amount;
     input.addEventListener("input", () => {
       item.amount = Number(input.value) || 0;
-      saveAttorneyItems(state.attorneyItems);
       renderAttorneyResults();
       renderSummary();
     });
@@ -616,6 +656,101 @@ function renderSummary() {
       ? `(${formatAmount(localAttorneyChf, "CHF")} + ${formatAmount(ukipoAttorneyGbp, "GBP")}, keine USt.)`
       : `(${formatAmount(localAttorneyChf, "CHF")}, keine USt.)`;
   document.getElementById("summary-total").textContent = formatAmount(grandTotal, "EUR");
+
+  persistCases();
+}
+
+function updateWipoBaseMarkWarning() {
+  const warning = document.getElementById("wipo-base-mark-warning");
+  const needsWarning = state.wipoEnabled && !state.dpmaEnabled && !state.euipoEnabled;
+  warning.style.display = needsWarning ? "block" : "none";
+}
+
+function calculateComparisonScenarios() {
+  if (!state.dpmaEnabled || (!state.euipoEnabled && !state.ukipoEnabled)) return null;
+
+  const dpmaTotal = sumItems(lastDpmaItems, "EUR");
+
+  const directLabels = [];
+  let directExtra = 0;
+  if (state.euipoEnabled) {
+    directLabels.push("EUIPO");
+    directExtra += sumItems(lastEuipoItems, "EUR");
+  }
+  if (state.ukipoEnabled) {
+    directLabels.push("UKIPO");
+    directExtra += sumItems(lastUkipoOfficialItems, "GBP") * state.gbpExchangeRate;
+  }
+  const directTotal = dpmaTotal + directExtra;
+
+  const madridCodes = [];
+  if (state.euipoEnabled) madridCodes.push("EU");
+  if (state.ukipoEnabled) madridCodes.push("GB");
+  const madridItems = calculateWipo({
+    classes: state.classes,
+    color: state.wipoColor,
+    mode: "application",
+    designatedMemberCodes: madridCodes,
+    memberFeeOverrides: {},
+  });
+  const madridChf = sumItems(madridItems, "CHF");
+  const madridEur = madridChf * state.exchangeRate;
+  const madridTotal = dpmaTotal + madridEur;
+
+  return { dpmaTotal, directLabels, directTotal, madridCodes, madridChf, madridEur, madridTotal };
+}
+
+function renderComparison() {
+  const container = document.getElementById("comparison-content");
+  const scenario = calculateComparisonScenarios();
+
+  if (!scenario) {
+    container.innerHTML = `<p class="hint">Aktiviere DPMA (als Basismarke) sowie EUIPO und/oder UKIPO, um hier einen Kostenvergleich zwischen Direktanmeldung und IR-Marke über WIPO für dieselbe Länderabdeckung zu sehen.</p>`;
+    return;
+  }
+
+  const countryNames = scenario.madridCodes
+    .map((code) => WIPO_MEMBERS.find((m) => m.code === code)?.name || code)
+    .join(" + ");
+  const diff = scenario.directTotal - scenario.madridTotal;
+  let conclusion;
+  if (Math.abs(diff) < 0.01) {
+    conclusion = "Beide Wege kosten amtlich etwa gleich viel.";
+  } else if (diff > 0) {
+    conclusion = `Die IR-Marke über WIPO ist günstiger, um ${formatAmount(diff, "EUR")}.`;
+  } else {
+    conclusion = `Die Direktanmeldung ist günstiger, um ${formatAmount(-diff, "EUR")}.`;
+  }
+
+  container.innerHTML = `
+    <p class="hint">
+      Vergleich der amtlichen Gebühren (ohne anwaltliches Honorar) für dieselbe Länderabdeckung (DPMA + ${countryNames}),
+      jeweils inklusive DPMA als notwendiger Basismarke.
+    </p>
+    <table class="line-items">
+      <tbody>
+        <tr>
+          <td>Direktanmeldung (DPMA + ${scenario.directLabels.join(" + ")})</td>
+          <td class="amount">${formatAmount(scenario.directTotal, "EUR")}</td>
+        </tr>
+        <tr>
+          <td>IR-Marke über WIPO (Basis DPMA, Benennung ${scenario.madridCodes.join("/")})
+            <span class="muted small">(${formatAmount(scenario.madridChf, "CHF")})</span>
+          </td>
+          <td class="amount">${formatAmount(scenario.madridTotal, "EUR")}</td>
+        </tr>
+        <tr class="subtotal">
+          <td>${conclusion}</td>
+          <td class="amount"></td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="hint">
+      Die WIPO-Grundgebühr lohnt sich meist erst ab mehreren zusätzlichen Zielländern, da sie unabhängig von der
+      Anzahl benannter Länder einmal anfällt. Bei nur einem zusätzlichen Land wie hier ist die Direktanmeldung oft
+      günstiger.
+    </p>
+  `;
 }
 
 function render() {
@@ -625,6 +760,8 @@ function render() {
   renderWipoCountryList();
   renderWipoResults();
   renderAttorneyResults();
+  updateWipoBaseMarkWarning();
+  renderComparison();
   renderSummary();
 }
 
@@ -718,10 +855,12 @@ function renderPrintView() {
   }
   if (state.ukipoEnabled) {
     const officialTable = printLineItemsTable(lastUkipoOfficialItems, "GBP");
-    const attorneyGbpTable = printLineItemsTable(lastUkipoAttorneyItems, "GBP");
-    const gbpTotal = sumItems(lastUkipoOfficialItems, "GBP") + sumItems(lastUkipoAttorneyItems, "GBP");
+    const attorneyGbpTable = state.clientView ? "" : printLineItemsTable(lastUkipoAttorneyItems, "GBP");
+    const gbpForNote = sumItems(lastUkipoOfficialItems, "GBP") + (state.clientView ? 0 : sumItems(lastUkipoAttorneyItems, "GBP"));
     const ukipoNote = officialTable
-      ? `<p class="print-subtitle-small">≈ ${formatAmount(gbpTotal * state.gbpExchangeRate, "EUR")} bei Kurs ${state.gbpExchangeRate} (Amt + Anwalt vor Ort)</p>`
+      ? `<p class="print-subtitle-small">≈ ${formatAmount(gbpForNote * state.gbpExchangeRate, "EUR")} bei Kurs ${state.gbpExchangeRate}${
+          state.clientView ? "" : " (Amt + Anwalt vor Ort)"
+        }</p>`
       : "";
     sections.push(
       printSection(
@@ -732,21 +871,39 @@ function renderPrintView() {
     );
   }
 
-  const attorneyTable = printLineItemsTable(lastAttorneyItems, "EUR");
-  if (attorneyTable) {
-    const net = sumItems(lastAttorneyItems, "EUR");
-    const vat = state.attorneyVatEnabled ? net * (state.attorneyVatRate / 100) : 0;
-    const vatTable = `<table class="line-items"><tbody>
-      <tr><td>Nettosumme</td><td class="amount">${formatAmount(net, "EUR")}</td></tr>
-      <tr><td>zzgl. USt. (${state.attorneyVatEnabled ? state.attorneyVatRate : 0}%)</td><td class="amount">${formatAmount(vat, "EUR")}</td></tr>
-      <tr class="subtotal"><td>Bruttosumme</td><td class="amount">${formatAmount(net + vat, "EUR")}</td></tr>
-    </tbody></table>`;
-    sections.push(printSection("Patentanwaltliche Gebühren (netto)", "", attorneyTable + vatTable));
-  }
+  const attorneyNet = sumItems(lastAttorneyItems, "EUR");
+  const attorneyVat = state.attorneyVatEnabled ? attorneyNet * (state.attorneyVatRate / 100) : 0;
+  const ukipoAttorneyEur = sumItems(lastUkipoAttorneyItems, "GBP") * state.gbpExchangeRate;
+  const localAttorneyEur = sumItems(lastLocalAttorneyItems, "CHF") * state.exchangeRate + ukipoAttorneyEur;
 
-  const localTable = printLineItemsTable(lastLocalAttorneyItems, "CHF");
-  if (localTable) {
-    sections.push(printSection("Honorar Patentanwalt vor Ort", "Korrespondenzanwalt, ohne deutsche USt.", localTable));
+  if (state.clientView) {
+    const lumpSum = attorneyNet + attorneyVat + localAttorneyEur;
+    if (lumpSum > 0) {
+      sections.push(
+        printSection(
+          "Honorare",
+          "Patentanwalt inkl. etwaiger Korrespondenzanwälte, Pauschalbetrag",
+          `<table class="line-items"><tbody>
+            <tr class="subtotal"><td>Honorare gesamt</td><td class="amount">${formatAmount(lumpSum, "EUR")}</td></tr>
+          </tbody></table>`
+        )
+      );
+    }
+  } else {
+    const attorneyTable = printLineItemsTable(lastAttorneyItems, "EUR");
+    if (attorneyTable) {
+      const vatTable = `<table class="line-items"><tbody>
+        <tr><td>Nettosumme</td><td class="amount">${formatAmount(attorneyNet, "EUR")}</td></tr>
+        <tr><td>zzgl. USt. (${state.attorneyVatEnabled ? state.attorneyVatRate : 0}%)</td><td class="amount">${formatAmount(attorneyVat, "EUR")}</td></tr>
+        <tr class="subtotal"><td>Bruttosumme</td><td class="amount">${formatAmount(attorneyNet + attorneyVat, "EUR")}</td></tr>
+      </tbody></table>`;
+      sections.push(printSection("Patentanwaltliche Gebühren (netto)", "", attorneyTable + vatTable));
+    }
+
+    const localTable = printLineItemsTable(lastLocalAttorneyItems, "CHF");
+    if (localTable) {
+      sections.push(printSection("Honorar Patentanwalt vor Ort", "Korrespondenzanwalt, ohne deutsche USt.", localTable));
+    }
   }
 
   const dpmaTotal = sumItems(lastDpmaItems, "EUR");
@@ -754,26 +911,37 @@ function renderPrintView() {
   const wipoTotalChf = sumItems(lastWipoItems, "CHF");
   const wipoTotalEur = wipoTotalChf * state.exchangeRate;
   const ukipoOfficialEur = sumItems(lastUkipoOfficialItems, "GBP") * state.gbpExchangeRate;
-  const ukipoAttorneyEur = sumItems(lastUkipoAttorneyItems, "GBP") * state.gbpExchangeRate;
-  const attorneyNet = sumItems(lastAttorneyItems, "EUR");
-  const attorneyVat = state.attorneyVatEnabled ? attorneyNet * (state.attorneyVatRate / 100) : 0;
-  const localAttorneyEur = sumItems(lastLocalAttorneyItems, "CHF") * state.exchangeRate + ukipoAttorneyEur;
   const officialTotal = dpmaTotal + euipoTotal + wipoTotalEur + ukipoOfficialEur;
   const grandTotal = officialTotal + attorneyNet + attorneyVat + localAttorneyEur;
+
+  const summaryRows = [
+    `<tr><td>DPMA</td><td class="amount">${formatAmount(dpmaTotal, "EUR")}</td></tr>`,
+    `<tr><td>EUIPO</td><td class="amount">${formatAmount(euipoTotal, "EUR")}</td></tr>`,
+    `<tr><td>WIPO</td><td class="amount">${formatAmount(wipoTotalEur, "EUR")}</td></tr>`,
+    `<tr><td>UKIPO</td><td class="amount">${formatAmount(ukipoOfficialEur, "EUR")}</td></tr>`,
+    `<tr class="subtotal"><td>Amtliche Gebühren gesamt (keine USt.)</td><td class="amount">${formatAmount(officialTotal, "EUR")}</td></tr>`,
+  ];
+  if (state.clientView) {
+    summaryRows.push(
+      `<tr><td>Honorare (Patentanwalt inkl. Korrespondenzanwälte)</td><td class="amount">${formatAmount(
+        attorneyNet + attorneyVat + localAttorneyEur,
+        "EUR"
+      )}</td></tr>`
+    );
+  } else {
+    summaryRows.push(
+      `<tr><td>Patentanwaltliche Gebühren (netto)</td><td class="amount">${formatAmount(attorneyNet, "EUR")}</td></tr>`,
+      `<tr><td>zzgl. USt. auf Anwaltsgebühren</td><td class="amount">${formatAmount(attorneyVat, "EUR")}</td></tr>`,
+      `<tr><td>Honorar Patentanwalt vor Ort</td><td class="amount">${formatAmount(localAttorneyEur, "EUR")}</td></tr>`
+    );
+  }
+  summaryRows.push(`<tr class="grand-total"><td>Gesamtsumme</td><td class="amount">${formatAmount(grandTotal, "EUR")}</td></tr>`);
 
   sections.push(`
     <section class="print-section">
       <h2>Gesamtübersicht</h2>
       <table class="line-items"><tbody>
-        <tr><td>DPMA</td><td class="amount">${formatAmount(dpmaTotal, "EUR")}</td></tr>
-        <tr><td>EUIPO</td><td class="amount">${formatAmount(euipoTotal, "EUR")}</td></tr>
-        <tr><td>WIPO</td><td class="amount">${formatAmount(wipoTotalEur, "EUR")}</td></tr>
-        <tr><td>UKIPO</td><td class="amount">${formatAmount(ukipoOfficialEur, "EUR")}</td></tr>
-        <tr class="subtotal"><td>Amtliche Gebühren gesamt (keine USt.)</td><td class="amount">${formatAmount(officialTotal, "EUR")}</td></tr>
-        <tr><td>Patentanwaltliche Gebühren (netto)</td><td class="amount">${formatAmount(attorneyNet, "EUR")}</td></tr>
-        <tr><td>zzgl. USt. auf Anwaltsgebühren</td><td class="amount">${formatAmount(attorneyVat, "EUR")}</td></tr>
-        <tr><td>Honorar Patentanwalt vor Ort</td><td class="amount">${formatAmount(localAttorneyEur, "EUR")}</td></tr>
-        <tr class="grand-total"><td>Gesamtsumme</td><td class="amount">${formatAmount(grandTotal, "EUR")}</td></tr>
+        ${summaryRows.join("\n")}
       </tbody></table>
     </section>
   `);
@@ -839,80 +1007,137 @@ function setModeUI(groupName, mode) {
   });
 }
 
-function resetForm() {
-  const confirmed = window.confirm(
-    "Formular für eine neue Marke zurücksetzen? Alle aktuellen Eingaben (Klassen, Ämter, Länder, angehakte Honorarpositionen) gehen verloren. Die hinterlegten Honorarbeträge selbst bleiben erhalten."
-  );
-  if (!confirmed) return;
-
-  state.reportTitle = "";
-  state.classes = 3;
-  state.exchangeRate = 1.06;
-  state.gbpExchangeRate = 1.17;
-
-  state.dpmaEnabled = true;
-  state.dpmaMode = "application";
-  state.dpmaElectronic = true;
-  state.dpmaAccelerated = false;
-  state.dpmaOpposition = false;
-
-  state.euipoEnabled = true;
-  state.euipoMode = "application";
-  state.euipoElectronic = true;
-  state.euipoOpposition = false;
-
-  state.wipoEnabled = false;
-  state.wipoMode = "application";
-  state.wipoColor = false;
-  state.wipoCountries = [];
-  state.wipoOverrides = {};
-  state.wipoAttorneyDesignationOverrides = {};
-  state.wipoLocalAttorneyOverrides = {};
-
-  state.ukipoEnabled = false;
-
-  state.attorneyItems.forEach((item) => {
-    item.enabled = false;
-  });
-  saveAttorneyItems(state.attorneyItems);
-
-  state.attorneyVatEnabled = true;
-  state.attorneyVatRate = ATTORNEY_VAT_RATE_DEFAULT;
-
-  document.getElementById("report-title").value = "";
+function syncFormFromState() {
+  document.getElementById("report-title").value = state.reportTitle;
   document.getElementById("classes").value = state.classes;
   document.getElementById("exchange-rate").value = state.exchangeRate;
   document.getElementById("gbp-exchange-rate").value = state.gbpExchangeRate;
 
-  document.getElementById("dpma-enabled").checked = true;
-  document.getElementById("dpma-panel").style.display = "flex";
-  setModeUI("dpma", "application");
-  document.getElementById("dpma-electronic").checked = true;
-  document.getElementById("dpma-accelerated").checked = false;
-  document.getElementById("dpma-opposition").checked = false;
+  document.getElementById("dpma-enabled").checked = state.dpmaEnabled;
+  document.getElementById("dpma-panel").style.display = state.dpmaEnabled ? "flex" : "none";
+  setModeUI("dpma", state.dpmaMode);
+  document.getElementById("dpma-electronic").checked = state.dpmaElectronic;
+  document.getElementById("dpma-accelerated").checked = state.dpmaAccelerated;
+  document.getElementById("dpma-opposition").checked = state.dpmaOpposition;
 
-  document.getElementById("euipo-enabled").checked = true;
-  document.getElementById("euipo-panel").style.display = "flex";
-  setModeUI("euipo", "application");
-  document.getElementById("euipo-electronic").checked = true;
-  document.getElementById("euipo-opposition").checked = false;
+  document.getElementById("euipo-enabled").checked = state.euipoEnabled;
+  document.getElementById("euipo-panel").style.display = state.euipoEnabled ? "flex" : "none";
+  setModeUI("euipo", state.euipoMode);
+  document.getElementById("euipo-electronic").checked = state.euipoElectronic;
+  document.getElementById("euipo-opposition").checked = state.euipoOpposition;
 
-  document.getElementById("wipo-enabled").checked = false;
-  document.getElementById("wipo-panel").style.display = "none";
-  setModeUI("wipo", "application");
-  document.getElementById("wipo-color").checked = false;
+  document.getElementById("wipo-enabled").checked = state.wipoEnabled;
+  document.getElementById("wipo-panel").style.display = state.wipoEnabled ? "flex" : "none";
+  setModeUI("wipo", state.wipoMode);
+  document.getElementById("wipo-color").checked = state.wipoColor;
 
-  document.getElementById("ukipo-enabled").checked = false;
-  document.getElementById("ukipo-panel").style.display = "none";
+  document.getElementById("ukipo-enabled").checked = state.ukipoEnabled;
+  document.getElementById("ukipo-panel").style.display = state.ukipoEnabled ? "flex" : "none";
 
-  document.getElementById("attorney-vat-enabled").checked = true;
+  document.getElementById("attorney-vat-enabled").checked = state.attorneyVatEnabled;
   document.getElementById("attorney-vat-rate").value = state.attorneyVatRate;
+  document.getElementById("client-view-enabled").checked = state.clientView;
 
   updateModeVisibility();
+}
+
+function resetForm() {
+  const confirmed = window.confirm(
+    "Formular für diesen Fall zurücksetzen? Alle aktuellen Eingaben (Klassen, Ämter, Länder, angehakte Honorarpositionen) gehen verloren. Die hinterlegten Honorarbeträge selbst bleiben erhalten."
+  );
+  if (!confirmed) return;
+
+  const attorneyItems = state.attorneyItems;
+  attorneyItems.forEach((item) => {
+    item.enabled = false;
+  });
+
+  Object.assign(state, createDefaultCaseState(attorneyItems));
+
+  syncFormFromState();
   renderAttorneyInputs();
   render();
+  renderCaseTabs();
 
   window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function switchCase(id) {
+  if (id === activeCaseId) return;
+  const target = cases.find((c) => c.id === id);
+  if (!target) return;
+
+  activeCaseId = id;
+  state = target.state;
+
+  syncFormFromState();
+  renderAttorneyInputs();
+  render();
+  renderCaseTabs();
+  persistCases();
+}
+
+function addCase() {
+  const seedAttorneyItems = state.attorneyItems.map((item) => ({ ...item, enabled: false }));
+  const newCase = { id: generateCaseId(), state: createDefaultCaseState(seedAttorneyItems) };
+  cases.push(newCase);
+  switchCase(newCase.id);
+}
+
+function deleteCase(id) {
+  if (cases.length <= 1) return;
+  const target = cases.find((c) => c.id === id);
+  if (!target) return;
+
+  const confirmed = window.confirm(`Fall "${caseLabel(target)}" wirklich löschen? Das kann nicht rückgängig gemacht werden.`);
+  if (!confirmed) return;
+
+  const index = cases.indexOf(target);
+  cases.splice(index, 1);
+
+  if (activeCaseId === id) {
+    const nextCase = cases[Math.max(0, index - 1)];
+    activeCaseId = nextCase.id;
+    state = nextCase.state;
+    syncFormFromState();
+    renderAttorneyInputs();
+    render();
+  }
+
+  renderCaseTabs();
+  persistCases();
+}
+
+function renderCaseTabs() {
+  const container = document.getElementById("case-tabs");
+  container.innerHTML = "";
+
+  cases.forEach((c) => {
+    const tab = document.createElement("div");
+    tab.className = "case-tab" + (c.id === activeCaseId ? " active" : "");
+
+    const labelBtn = document.createElement("button");
+    labelBtn.type = "button";
+    labelBtn.className = "case-tab-label";
+    labelBtn.textContent = caseLabel(c);
+    labelBtn.addEventListener("click", () => switchCase(c.id));
+    tab.appendChild(labelBtn);
+
+    if (cases.length > 1) {
+      const closeBtn = document.createElement("button");
+      closeBtn.type = "button";
+      closeBtn.className = "case-tab-close";
+      closeBtn.title = "Fall löschen";
+      closeBtn.textContent = "×";
+      closeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        deleteCase(c.id);
+      });
+      tab.appendChild(closeBtn);
+    }
+
+    container.appendChild(tab);
+  });
 }
 
 function bindSectionToggle(checkboxId, panelId, key) {
@@ -1007,6 +1232,7 @@ function init() {
 
   bindToggle("attorney-vat-enabled", "attorneyVatEnabled");
   bindNumber("attorney-vat-rate", "attorneyVatRate");
+  bindToggle("client-view-enabled", "clientView");
 
   document.getElementById("jump-to-wipo-countries").addEventListener("click", () => {
     const wipoCheckbox = document.getElementById("wipo-enabled");
@@ -1019,6 +1245,7 @@ function init() {
 
   document.getElementById("report-title").addEventListener("input", (e) => {
     state.reportTitle = e.target.value;
+    renderCaseTabs();
   });
 
   document.getElementById("print-button").addEventListener("click", () => {
@@ -1027,8 +1254,10 @@ function init() {
   });
 
   document.getElementById("reset-button").addEventListener("click", resetForm);
+  document.getElementById("add-case-button").addEventListener("click", addCase);
 
   renderAttorneyInputs();
+  renderCaseTabs();
 
   render();
 }

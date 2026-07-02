@@ -27,6 +27,22 @@ Build-Schritt, kein Server nötig.
   Formularelemente) über die native Browser-Druckfunktion – im Druckdialog als Ziel
   "Als PDF speichern" wählen. Optional lässt sich vorher eine Bezeichnung/Referenz (z. B.
   Markenname) eintragen, die im Dokument erscheint.
+- **Mandantenansicht**: Checkbox, die im PDF die einzelnen Honorarpositionen zu einer
+  Pauschalsumme zusammenfasst, ohne die interne Kostenstruktur offenzulegen. Amtliche
+  Gebühren bleiben weiterhin aufgeschlüsselt.
+- **Kostenvergleich**: Vergleicht (nur amtliche Gebühren) die Direktanmeldung bei EUIPO/UKIPO
+  mit einer IR-Marke über WIPO für dieselbe Länderabdeckung, jeweils inkl. DPMA als
+  notwendiger Basismarke.
+- **Rechtlicher Hinweis zur Basismarke**: Warnt, wenn WIPO/Madrid aktiviert ist, aber weder
+  DPMA noch EUIPO als Basismarke ausgewählt sind.
+- **Veraltete-Daten-Warnung**: Zeigt ein Banner sowie Badges an den jeweiligen Ämtern, sobald
+  deren "Stand"-Datum älter als 6 Monate ist.
+- **Reset**: Setzt alle Eingaben des aktuellen Falls auf die Grundwerte zurück (mit
+  Sicherheitsabfrage), lässt aber die hinterlegten Honorarbeträge unangetastet.
+- **Mehrere Fälle**: Tableiste oben, um mehrere Markenanmeldungen parallel zu bearbeiten und
+  zwischen ihnen zu wechseln, ohne Eingaben zu verlieren. Jeder Fall speichert seinen eigenen
+  Stand automatisch im Browser (`localStorage`); die Fall-Tabs übernehmen automatisch die
+  eingetragene Bezeichnung/Referenz als Titel.
 
 Die Gebührendaten liegen gesammelt in `fees-data.js` und lassen sich dort bei
 Gebührenänderungen zentral aktualisieren, ohne die Rechenlogik (`app.js`) anfassen zu müssen.

@@ -18,10 +18,19 @@
       </p>
     </header>
 
+    <div class="no-print case-tab-bar">
+      <div id="case-tabs" class="case-tabs"></div>
+      <button type="button" id="add-case-button" class="case-tab-add" title="Neuen Fall anlegen">+ Neuer Fall</button>
+    </div>
+
     <section class="card no-print print-bar">
       <label class="field">
         <span>Bezeichnung / Referenz (optional, erscheint im Dokument)</span>
         <input type="text" id="report-title" placeholder="z. B. Markenname oder Mandat" />
+      </label>
+      <label class="field row client-view-toggle">
+        <span>Mandantenansicht (nur Gesamtsumme im PDF, ohne Honorar-Details)</span>
+        <input type="checkbox" id="client-view-enabled" />
       </label>
       <div class="button-group">
         <button type="button" id="reset-button" class="print-button secondary">↺ Zurücksetzen (neue Marke)</button>
@@ -29,7 +38,7 @@
       </div>
     </section>
 
-    <div id="stale-banner" class="card no-print stale-banner" style="display: none"></div>
+    <div id="stale-banner" class="card no-print warning-banner" style="display: none"></div>
 
     <section class="card">
       <h2>Allgemeine Angaben</h2>
@@ -103,6 +112,14 @@
           <input type="checkbox" id="wipo-enabled" />
         </label>
         <div id="wipo-panel" class="panel">
+          <p class="hint">
+            Voraussetzung für eine IR-Marke ist eine bereits angemeldete oder eingetragene Basismarke bei DPMA oder
+            EUIPO (Art. 3(1) MMA/MMP). Ohne Basismarke ist keine Benennung über das Madrider System möglich.
+          </p>
+          <p class="warning-text" id="wipo-base-mark-warning" style="display: none">
+            ⚠ Keine Basismarke ausgewählt: Bitte zusätzlich DPMA und/oder EUIPO aktivieren, oder sicherstellen, dass
+            bereits eine Basismarke existiert.
+          </p>
           <div class="mode-toggle">
             <button type="button" data-mode-group="wipo" data-mode="application">Anmeldung</button>
             <button type="button" data-mode-group="wipo" data-mode="renewal">Verlängerung</button>
@@ -139,6 +156,11 @@
         </div>
       </section>
     </div>
+
+    <section class="card">
+      <h2>Kostenvergleich: Direktanmeldung vs. IR-Marke (WIPO)</h2>
+      <div id="comparison-content"></div>
+    </section>
 
     <section class="card">
       <h2>Patentanwaltliche Gebühren</h2>

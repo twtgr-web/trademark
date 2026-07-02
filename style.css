@@ -259,12 +259,18 @@ body {
   white-space: nowrap;
 }
 
-.stale-banner {
+.warning-banner {
   background: var(--warn-bg);
   color: var(--warn-text);
   border: 1px solid #f5cf87;
   font-size: 0.85rem;
   padding: 0.8rem 1rem;
+}
+
+.warning-text {
+  color: var(--warn-text);
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
 .override-input {
@@ -361,10 +367,91 @@ table.line-items .grand-total td {
   font-size: 0.9rem;
 }
 
+.print-bar .client-view-toggle {
+  flex-direction: row;
+  align-items: center;
+  min-width: 20rem;
+  font-size: 0.85rem;
+}
+
 .button-group {
   display: flex;
   gap: 0.6rem;
   flex-wrap: wrap;
+}
+
+.case-tab-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.case-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  flex: 1;
+}
+
+.case-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem 0.5rem 0 0;
+  padding: 0.1rem 0.2rem 0.1rem 0.7rem;
+}
+
+.case-tab.active {
+  border-bottom: 2px solid var(--accent);
+  font-weight: 600;
+}
+
+.case-tab-label {
+  background: none;
+  border: none;
+  padding: 0.4rem 0;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: var(--text);
+  max-width: 14rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.case-tab-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.3rem;
+}
+
+.case-tab-close:hover {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.case-tab-add {
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: 0.5rem;
+  padding: 0.45rem 0.8rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.case-tab-add:hover {
+  background: var(--card-bg);
 }
 
 .print-button {
