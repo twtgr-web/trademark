@@ -459,6 +459,7 @@ function renderWipoCountryList() {
           if (v === undefined) delete state.wipoOverrides[member.code];
           else state.wipoOverrides[member.code] = v;
           renderWipoResults();
+          renderComparison();
           renderSummary();
         })
       );
@@ -467,6 +468,7 @@ function renderWipoCountryList() {
           if (v === undefined) delete state.wipoAttorneyDesignationOverrides[member.code];
           else state.wipoAttorneyDesignationOverrides[member.code] = v;
           renderAttorneyResults();
+          renderComparison();
           renderSummary();
         })
       );
@@ -479,6 +481,7 @@ function renderWipoCountryList() {
             if (v === undefined) delete state.wipoLocalAttorneyOverrides[member.code];
             else state.wipoLocalAttorneyOverrides[member.code] = v;
             renderAttorneyResults();
+            renderComparison();
             renderSummary();
           },
           "vor-ort-field"
@@ -518,6 +521,7 @@ function renderAttorneyInputs() {
     checkbox.addEventListener("change", () => {
       item.enabled = checkbox.checked;
       renderAttorneyResults();
+      renderComparison();
       renderSummary();
     });
 
@@ -531,6 +535,7 @@ function renderAttorneyInputs() {
     input.addEventListener("input", () => {
       item.amount = Number(input.value) || 0;
       renderAttorneyResults();
+      renderComparison();
       renderSummary();
     });
 
@@ -708,52 +713,148 @@ function updateWipoBaseMarkWarning() {
   warning.style.display = needsWarning ? "block" : "none";
 }
 
+function attorneyItemsInGroup(groupName) {
+  return state.attorneyItems.filter((i) => i.group === groupName);
+}
+
+function sumConvertedToEur(items) {
+  let total = 0;
+  for (const item of items) {
+    if (item.currency === "EUR") total += item.amount;
+    else if (item.currency === "CHF") total += item.amount * state.exchangeRate;
+    else if (item.currency === "GBP") total += item.amount * state.gbpExchangeRate;
+  }
+  return total;
+}
+
+// Vergleicht die "Bottom Line" (amtliche Gebühren + tatsächlich angehakte anwaltliche
+// Honorare, jeweils inkl. USt. auf die honorarpflichtigen Anteile) zwischen Direktanmeldung
+// und IR-Marke über WIPO für dieselbe Länderabdeckung. Die Basismarke ist entweder DPMA
+// (bevorzugt, falls beide aktiv sind) oder EUIPO. Ist DPMA die Basis, zählt eine aktivierte
+// EUIPO als Vergleichsziel; ist EUIPO selbst die Basis (weil DPMA nicht aktiv ist), kann sie
+// nicht gleichzeitig Vergleichsziel sein. Honorare des Korrespondenzanwalts vor Ort werden
+// analog zur übrigen App ohne deutsche USt. behandelt.
 function calculateComparisonScenarios() {
-  // Die Basismarke ist entweder DPMA (bevorzugt, falls beide aktiv sind) oder EUIPO. Ist DPMA
-  // die Basis, zählt eine aktivierte EUIPO als Vergleichsziel; ist EUIPO selbst die Basis (weil
-  // DPMA nicht aktiv ist), kann sie nicht gleichzeitig Vergleichsziel sein.
-  let baseTotal;
+  let baseOfficialEur;
+  let baseAttorneyNet;
   let baseLabel;
   const targets = [];
 
   if (state.dpmaEnabled) {
-    baseTotal = sumItems(lastDpmaItems, "EUR");
+    baseOfficialEur = sumItems(lastDpmaItems, "EUR");
+    baseAttorneyNet = sumItems(calculateAttorneyFees(attorneyItemsInGroup("DPMA"), state.classes, 0), "EUR");
     baseLabel = "DPMA";
     if (state.euipoEnabled) {
-      targets.push({ label: "EUIPO", directEur: sumItems(lastEuipoItems, "EUR"), madridCode: "EU" });
+      targets.push({
+        label: "EUIPO",
+        directOfficialEur: sumItems(lastEuipoItems, "EUR"),
+        directAttorneyNet: sumItems(calculateAttorneyFees(attorneyItemsInGroup("EUIPO"), state.classes, 0), "EUR"),
+        directLocalEur: 0,
+        madridCode: "EU",
+      });
     }
   } else if (state.euipoEnabled) {
-    baseTotal = sumItems(lastEuipoItems, "EUR");
+    baseOfficialEur = sumItems(lastEuipoItems, "EUR");
+    baseAttorneyNet = sumItems(calculateAttorneyFees(attorneyItemsInGroup("EUIPO"), state.classes, 0), "EUR");
     baseLabel = "EUIPO";
   } else {
     return null;
   }
 
   if (state.ukipoEnabled) {
-    targets.push({ label: "UKIPO", directEur: sumItems(lastUkipoOfficialItems, "GBP") * state.gbpExchangeRate, madridCode: "GB" });
+    targets.push({
+      label: "UKIPO",
+      directOfficialEur: sumItems(lastUkipoOfficialItems, "GBP") * state.gbpExchangeRate,
+      directAttorneyNet: 0,
+      directLocalEur: sumItems(lastUkipoAttorneyItems, "GBP") * state.gbpExchangeRate,
+      madridCode: "GB",
+    });
   }
   if (state.chEnabled) {
-    targets.push({ label: "Schweiz (IGE)", directEur: sumItems(lastChOfficialItems, "CHF") * state.exchangeRate, madridCode: "CH" });
+    targets.push({
+      label: "Schweiz (IGE)",
+      directOfficialEur: sumItems(lastChOfficialItems, "CHF") * state.exchangeRate,
+      directAttorneyNet: 0,
+      directLocalEur: sumItems(lastChAttorneyItems, "CHF") * state.exchangeRate,
+      madridCode: "CH",
+    });
   }
 
   if (targets.length === 0) return null;
 
+  const commonAttorneyNet =
+    sumItems(calculateAttorneyFees(attorneyItemsInGroup("Allgemein"), state.classes, 0), "EUR") +
+    sumItems(calculateAttorneyFees(attorneyItemsInGroup("Marke Europa (DPMA/EUIPO)"), state.classes, 0), "EUR");
+
   const directLabels = targets.map((t) => t.label);
-  const directTotal = baseTotal + targets.reduce((sum, t) => sum + t.directEur, 0);
+  const directOfficialTotal = baseOfficialEur + targets.reduce((sum, t) => sum + t.directOfficialEur, 0);
+  const directAttorneyNet = baseAttorneyNet + commonAttorneyNet + targets.reduce((sum, t) => sum + t.directAttorneyNet, 0);
+  const directLocalEur = targets.reduce((sum, t) => sum + t.directLocalEur, 0);
+  const directAttorneyVat = state.attorneyVatEnabled ? directAttorneyNet * (state.attorneyVatRate / 100) : 0;
+  const directTotal = directOfficialTotal + directAttorneyNet + directAttorneyVat + directLocalEur;
 
   const madridCodes = targets.map((t) => t.madridCode);
-  const madridItems = calculateWipo({
+  const madridOfficialItems = calculateWipo({
     classes: state.classes,
     color: state.wipoColor,
     mode: "application",
     designatedMemberCodes: madridCodes,
     memberFeeOverrides: {},
   });
-  const madridChf = sumItems(madridItems, "CHF");
-  const madridEur = madridChf * state.exchangeRate;
-  const madridTotal = baseTotal + madridEur;
+  const madridChf = sumItems(madridOfficialItems, "CHF");
+  const madridOfficialEur = baseOfficialEur + madridChf * state.exchangeRate;
 
-  return { baseTotal, baseLabel, directLabels, directTotal, madridCodes, madridChf, madridEur, madridTotal };
+  const wipoGroupAttorneyEur = sumItems(
+    calculateAttorneyFees(attorneyItemsInGroup("WIPO – Anmeldung (IR-Marke)"), state.classes, madridCodes.length),
+    "EUR"
+  );
+  const designationAttorneyEur = sumItems(
+    calculateWipoDesignationAttorneyFees(madridCodes, "application", state.wipoAttorneyDesignationOverrides),
+    "EUR"
+  );
+  const madridAttorneyNet = baseAttorneyNet + commonAttorneyNet + wipoGroupAttorneyEur + designationAttorneyEur;
+  const madridAttorneyVat = state.attorneyVatEnabled ? madridAttorneyNet * (state.attorneyVatRate / 100) : 0;
+  const madridLocalEur = sumConvertedToEur(calculateLocalAttorneyFees(madridCodes, state.wipoLocalAttorneyOverrides));
+  const madridTotal = madridOfficialEur + madridAttorneyNet + madridAttorneyVat + madridLocalEur;
+
+  return {
+    baseLabel,
+    directLabels,
+    directOfficialTotal,
+    directAttorneyNet,
+    directAttorneyVat,
+    directLocalEur,
+    directTotal,
+    madridCodes,
+    madridChf,
+    madridOfficialEur,
+    madridAttorneyNet,
+    madridAttorneyVat,
+    madridLocalEur,
+    madridTotal,
+  };
+}
+
+function comparisonBreakdownTable(officialEur, attorneyNet, attorneyVat, localEur, total, detailed = true) {
+  if (!detailed) {
+    return `<table class="line-items"><tbody>
+      <tr class="subtotal"><td>Gesamt (amtlich + Honorar)</td><td class="amount">${formatAmount(total, "EUR")}</td></tr>
+    </tbody></table>`;
+  }
+  const rows = [`<tr><td>Amtliche Gebühren</td><td class="amount">${formatAmount(officialEur, "EUR")}</td></tr>`];
+  if (attorneyNet > 0) {
+    rows.push(`<tr><td>Anwaltliches Honorar (netto)</td><td class="amount">${formatAmount(attorneyNet, "EUR")}</td></tr>`);
+    if (state.attorneyVatEnabled) {
+      rows.push(
+        `<tr><td>zzgl. USt. (${state.attorneyVatRate}%)</td><td class="amount">${formatAmount(attorneyVat, "EUR")}</td></tr>`
+      );
+    }
+  }
+  if (localEur > 0) {
+    rows.push(`<tr><td>Honorar/Vertreter vor Ort (keine USt.)</td><td class="amount">${formatAmount(localEur, "EUR")}</td></tr>`);
+  }
+  rows.push(`<tr class="subtotal"><td>Gesamt</td><td class="amount">${formatAmount(total, "EUR")}</td></tr>`);
+  return `<table class="line-items"><tbody>${rows.join("")}</tbody></table>`;
 }
 
 function renderComparison() {
@@ -771,41 +872,44 @@ function renderComparison() {
   const diff = scenario.directTotal - scenario.madridTotal;
   let conclusion;
   if (Math.abs(diff) < 0.01) {
-    conclusion = "Beide Wege kosten amtlich etwa gleich viel.";
+    conclusion = "Beide Wege kosten unterm Strich etwa gleich viel.";
   } else if (diff > 0) {
-    conclusion = `Die IR-Marke über WIPO ist günstiger, um ${formatAmount(diff, "EUR")}.`;
+    conclusion = `Die IR-Marke über WIPO ist unterm Strich günstiger, um ${formatAmount(diff, "EUR")}.`;
   } else {
-    conclusion = `Die Direktanmeldung ist günstiger, um ${formatAmount(-diff, "EUR")}.`;
+    conclusion = `Die Direktanmeldung ist unterm Strich günstiger, um ${formatAmount(-diff, "EUR")}.`;
   }
 
   container.innerHTML = `
     <p class="hint">
-      Vergleich der amtlichen Gebühren (ohne anwaltliches Honorar) für dieselbe Länderabdeckung (${scenario.baseLabel} + ${countryNames}),
-      jeweils inklusive ${scenario.baseLabel} als notwendiger Basismarke.
+      Vergleich der Gesamtkosten (amtliche Gebühren + aktuell angehaktes anwaltliches Honorar, siehe unten) für
+      dieselbe Länderabdeckung (${scenario.baseLabel} + ${countryNames}), jeweils inklusive ${scenario.baseLabel}
+      als notwendiger Basismarke. Positionen, die für beide Wege gleichermaßen anfallen (Basismarke, allgemeine
+      Positionen), sind in beiden Summen enthalten.
     </p>
+    <p class="field-label">Direktanmeldung (${scenario.baseLabel} + ${scenario.directLabels.join(" + ")})</p>
+    ${comparisonBreakdownTable(
+      scenario.directOfficialTotal,
+      scenario.directAttorneyNet,
+      scenario.directAttorneyVat,
+      scenario.directLocalEur,
+      scenario.directTotal
+    )}
+    <p class="field-label">
+      IR-Marke über WIPO (Basis ${scenario.baseLabel}, Benennung ${scenario.madridCodes.join("/")})
+      <span class="muted small">(${formatAmount(scenario.madridChf, "CHF")} amtlich)</span>
+    </p>
+    ${comparisonBreakdownTable(
+      scenario.madridOfficialEur,
+      scenario.madridAttorneyNet,
+      scenario.madridAttorneyVat,
+      scenario.madridLocalEur,
+      scenario.madridTotal
+    )}
     <table class="line-items">
       <tbody>
-        <tr>
-          <td>Direktanmeldung (${scenario.baseLabel} + ${scenario.directLabels.join(" + ")})</td>
-          <td class="amount">${formatAmount(scenario.directTotal, "EUR")}</td>
-        </tr>
-        <tr>
-          <td>IR-Marke über WIPO (Basis ${scenario.baseLabel}, Benennung ${scenario.madridCodes.join("/")})
-            <span class="muted small">(${formatAmount(scenario.madridChf, "CHF")})</span>
-          </td>
-          <td class="amount">${formatAmount(scenario.madridTotal, "EUR")}</td>
-        </tr>
-        <tr class="subtotal">
-          <td>${conclusion}</td>
-          <td class="amount"></td>
-        </tr>
+        <tr class="grand-total"><td>${conclusion}</td><td class="amount"></td></tr>
       </tbody>
     </table>
-    <p class="hint">
-      Die WIPO-Grundgebühr lohnt sich meist erst ab mehreren zusätzlichen Zielländern, da sie unabhängig von der
-      Anzahl benannter Länder einmal anfällt. Bei nur einem zusätzlichen Land wie hier ist die Direktanmeldung oft
-      günstiger.
-    </p>
   `;
 }
 
@@ -979,6 +1083,51 @@ function renderPrintView() {
     if (localTable) {
       sections.push(printSection("Honorar Patentanwalt vor Ort", "Korrespondenzanwalt, ohne deutsche USt.", localTable));
     }
+  }
+
+  const comparisonScenario = calculateComparisonScenarios();
+  if (comparisonScenario) {
+    const countryNames = comparisonScenario.madridCodes
+      .map((code) => WIPO_MEMBERS.find((m) => m.code === code)?.name || code)
+      .join(" + ");
+    const diff = comparisonScenario.directTotal - comparisonScenario.madridTotal;
+    let conclusion;
+    if (Math.abs(diff) < 0.01) {
+      conclusion = "Beide Wege kosten unterm Strich etwa gleich viel.";
+    } else if (diff > 0) {
+      conclusion = `Die IR-Marke über WIPO ist unterm Strich günstiger, um ${formatAmount(diff, "EUR")}.`;
+    } else {
+      conclusion = `Die Direktanmeldung ist unterm Strich günstiger, um ${formatAmount(-diff, "EUR")}.`;
+    }
+    sections.push(
+      printSection(
+        "Kostenvergleich: Direktanmeldung vs. IR-Marke (WIPO)",
+        `Länderabdeckung: ${comparisonScenario.baseLabel} + ${countryNames}`,
+        `<p class="print-subtitle-small"><strong>Direktanmeldung (${comparisonScenario.baseLabel} + ${comparisonScenario.directLabels.join(
+          " + "
+        )})</strong></p>` +
+          comparisonBreakdownTable(
+            comparisonScenario.directOfficialTotal,
+            comparisonScenario.directAttorneyNet,
+            comparisonScenario.directAttorneyVat,
+            comparisonScenario.directLocalEur,
+            comparisonScenario.directTotal,
+            !state.clientView
+          ) +
+          `<p class="print-subtitle-small"><strong>IR-Marke über WIPO (Basis ${comparisonScenario.baseLabel}, Benennung ${comparisonScenario.madridCodes.join(
+            "/"
+          )})</strong></p>` +
+          comparisonBreakdownTable(
+            comparisonScenario.madridOfficialEur,
+            comparisonScenario.madridAttorneyNet,
+            comparisonScenario.madridAttorneyVat,
+            comparisonScenario.madridLocalEur,
+            comparisonScenario.madridTotal,
+            !state.clientView
+          ) +
+          `<p class="print-subtitle-small"><strong>${conclusion}</strong></p>`
+      )
+    );
   }
 
   const dpmaTotal = sumItems(lastDpmaItems, "EUR");

@@ -32,9 +32,12 @@ kein Build-Schritt, kein Server nötig.
 - **Mandantenansicht**: Checkbox, die im PDF die einzelnen Honorarpositionen zu einer
   Pauschalsumme zusammenfasst, ohne die interne Kostenstruktur offenzulegen. Amtliche
   Gebühren bleiben weiterhin aufgeschlüsselt.
-- **Kostenvergleich**: Vergleicht (nur amtliche Gebühren) die Direktanmeldung bei EUIPO/UKIPO/
-  Schweiz mit einer IR-Marke über WIPO für dieselbe Länderabdeckung, jeweils inkl. DPMA oder
-  EUIPO als notwendiger Basismarke.
+- **Kostenvergleich**: Vergleicht die Gesamtkosten "unterm Strich" (amtliche Gebühren +
+  aktuell angehaktes anwaltliches Honorar inkl. USt. sowie Vor-Ort-/Vertreterhonorare) der
+  Direktanmeldung bei EUIPO/UKIPO/Schweiz mit einer IR-Marke über WIPO für dieselbe
+  Länderabdeckung, jeweils inkl. DPMA oder EUIPO als notwendiger Basismarke. Erscheint nach
+  den Patentanwaltsgebühren und ist auch im PDF-Export enthalten (in der Mandantenansicht nur
+  als Gesamtsumme je Weg, ohne Honorar-Details).
 - **Rechtlicher Hinweis zur Basismarke**: Warnt, wenn WIPO/Madrid aktiviert ist, aber weder
   DPMA noch EUIPO als Basismarke ausgewählt sind.
 - **Veraltete-Daten-Warnung**: Zeigt ein Banner sowie Badges an den jeweiligen Ämtern, sobald
