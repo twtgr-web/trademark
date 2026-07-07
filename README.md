@@ -90,3 +90,11 @@ Variante:
 
 Kein Build, kein Workflow, keine Installation nötig – genauso wie bei einem einfachen
 statischen Projekt mit eigener `index.html`.
+
+### Cache-Busting
+
+Die `<script>`/`<link>`-Tags in `index.html` und `recherche.html` referenzieren die Dateien mit
+einem Versionsparameter (z. B. `app.js?v=2`), damit Browser nach einem Update nicht versehentlich
+eine alte, zwischengespeicherte Version von `app.js`, `fees-data.js`, `recherche.js` oder
+`style.css` weiterverwenden. **Bei jeder inhaltlichen Änderung an einer dieser Dateien die
+Versionsnummer in allen referenzierenden HTML-Dateien hochzählen.**
