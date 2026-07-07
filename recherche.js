@@ -39,35 +39,49 @@ function renderDirectLinks() {
     const a = document.createElement("a");
     a.href = link.url;
     a.target = "_blank";
-    a.rel = "noreferrer";
+    a.rel = "noopener";
     a.className = "direct-link";
     a.textContent = link.label;
     container.appendChild(a);
   }
 }
 
+// Aktualisiert das href-Attribut des TMview-Links bei jeder Eingabe, statt die Seite per
+// window.open() zu öffnen. Manche Sicherheitssysteme (auch bei EUIPO selbst) stufen per
+// Skript geöffnete Popups ohne Referrer als verdächtig ein; ein normaler Linkklick mit
+// erhaltenem Referrer (rel="noopener" statt "noreferrer") vermeidet das.
+function updateTmviewLink() {
+  const term = document.getElementById("search-term").value.trim();
+  const classes = parseClasses(document.getElementById("search-classes").value);
+  const officeMap = [
+    ["office-de", "DE"],
+    ["office-em", "EM"],
+    ["office-wo", "WO"],
+    ["office-gb", "GB"],
+    ["office-ch", "CH"],
+  ];
+  const officeCodes = officeMap.filter(([id]) => document.getElementById(id).checked).map(([, code]) => code);
+
+  const link = document.getElementById("tmview-button");
+  link.href = term ? buildTmviewUrl(term, classes, officeCodes) : "https://www.tmdn.org/tmview/";
+}
+
 function init() {
   renderDirectLinks();
 
-  document.getElementById("tmview-button").addEventListener("click", () => {
-    const term = document.getElementById("search-term").value.trim();
-    const classes = parseClasses(document.getElementById("search-classes").value);
-    const officeMap = [
-      ["office-de", "DE"],
-      ["office-em", "EM"],
-      ["office-wo", "WO"],
-      ["office-gb", "GB"],
-      ["office-ch", "CH"],
-    ];
-    const officeCodes = officeMap.filter(([id]) => document.getElementById(id).checked).map(([, code]) => code);
+  const inputIds = ["search-term", "search-classes", "office-de", "office-em", "office-wo", "office-gb", "office-ch"];
+  for (const id of inputIds) {
+    document.getElementById(id).addEventListener("input", updateTmviewLink);
+  }
 
-    if (!term) {
+  document.getElementById("tmview-button").addEventListener("click", (e) => {
+    if (!document.getElementById("search-term").value.trim()) {
+      e.preventDefault();
       window.alert("Bitte zuerst einen Suchbegriff eingeben.");
-      return;
     }
-
-    window.open(buildTmviewUrl(term, classes, officeCodes), "_blank", "noreferrer");
   });
+
+  updateTmviewLink();
 }
 
 document.addEventListener("DOMContentLoaded", init);
