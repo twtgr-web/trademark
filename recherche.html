@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Markenrecherche</title>
+  <link rel="icon" href="data:," />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="page">
+    <header class="page-header">
+      <h1>Markenrecherche</h1>
+      <p class="muted">
+        Öffnet die offiziellen, kostenlosen Recherchetools von DPMA, EUIPO und WIPO in einem neuen Tab – mit
+        vorausgefülltem Suchbegriff, sofern das jeweilige Tool das unterstützt. Die Suche selbst läuft direkt bei den
+        Ämtern, hier wird nichts gespeichert oder übermittelt.
+      </p>
+      <p class="muted small"><a href="index.html">← Zurück zum Gebührenrechner</a></p>
+    </header>
+
+    <section class="card">
+      <h2>Sucheingabe</h2>
+      <div class="grid-2">
+        <label class="field">
+          <span>Suchbegriff (Markenname)</span>
+          <input type="text" id="search-term" placeholder="z. B. ACME" />
+        </label>
+        <label class="field">
+          <span>Nizza-Klassen (optional, kommagetrennt)</span>
+          <input type="text" id="search-classes" placeholder="z. B. 9, 25, 42" />
+        </label>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Ämter auswählen (für TMview-Sammelsuche)</h2>
+      <div class="grid-2">
+        <label class="field row"><span>DPMA (Deutschland)</span><input type="checkbox" id="office-de" checked /></label>
+        <label class="field row"><span>EUIPO (Unionsmarke)</span><input type="checkbox" id="office-em" checked /></label>
+        <label class="field row"><span>WIPO (IR-Marken)</span><input type="checkbox" id="office-wo" checked /></label>
+        <label class="field row"><span>Vereinigtes Königreich (UKIPO)</span><input type="checkbox" id="office-gb" checked /></label>
+        <label class="field row"><span>Schweiz (IGE)</span><input type="checkbox" id="office-ch" checked /></label>
+      </div>
+      <button type="button" id="tmview-button" class="print-button">🔍 TMview durchsuchen (alle ausgewählten Ämter)</button>
+      <p class="hint">
+        TMview ist das offizielle, von EUIPO betriebene Recherchetool und durchsucht die Register von über 75 Ämtern
+        gleichzeitig, darunter DPMA, EUIPO, WIPO (IR-Marken), UKIPO und die Schweiz. Empfohlener Startpunkt für eine
+        erste Übersicht.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Direktzugriff auf einzelne Datenbanken</h2>
+      <p class="muted small">
+        Diese Tools unterstützen keine zuverlässige Vorbefüllung des Suchbegriffs – bitte dort manuell eingeben.
+      </p>
+      <div id="direct-links" class="direct-links"></div>
+    </section>
+
+    <footer class="card footer">
+      <p class="footer-title">Hinweise</p>
+      <ul>
+        <li>
+          <a href="https://www.tmdn.org/tmview/" target="_blank" rel="noreferrer">TMview</a> (EUIPO),
+          <a href="https://register.dpma.de/DPMAregister/Uebersicht" target="_blank" rel="noreferrer">DPMAregister</a>,
+          <a href="https://euipo.europa.eu/eSearch/" target="_blank" rel="noreferrer">EUIPO eSearch plus</a>,
+          <a href="https://branddb.wipo.int/en/quicksearch" target="_blank" rel="noreferrer">WIPO Global Brand Database</a>,
+          <a href="https://trademarks.ipo.gov.uk/ipo-tmtext" target="_blank" rel="noreferrer">UK IPO Trade Mark Search</a>
+          und <a href="https://www.swissreg.ch/" target="_blank" rel="noreferrer">Swissreg</a> sind kostenlose, offizielle
+          Angebote der jeweiligen Ämter. Diese Seite verlinkt nur dorthin und führt selbst keine Recherche durch.
+        </li>
+        <li>
+          Eine Ähnlichkeitsrecherche ersetzt keine professionelle Markenrecherche und keine rechtliche Bewertung der
+          Eintragungsfähigkeit oder Kollisionsgefahr.
+        </li>
+        <li>
+          Das TMview-Link-Format basiert auf öffentlich dokumentierten URL-Parametern und kann sich ändern, falls
+          EUIPO das Tool umbaut – funktioniert der vorausgefüllte Link nicht mehr, hilft ein Klick auf
+          <a href="https://www.tmdn.org/tmview/" target="_blank" rel="noreferrer">tmdn.org/tmview</a> mit manueller
+          Eingabe.
+        </li>
+      </ul>
+    </footer>
+  </main>
+
+  <script src="recherche.js"></script>
+</body>
+</html>

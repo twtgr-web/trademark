@@ -344,6 +344,26 @@ table.line-items .grand-total td {
   color: var(--text);
 }
 
+.direct-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.direct-link {
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  color: var(--text);
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.direct-link:hover {
+  background: var(--bg);
+}
+
 .print-bar {
   display: flex;
   flex-wrap: wrap;

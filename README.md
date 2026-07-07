@@ -57,6 +57,16 @@ Rechtsberatung dar. Insbesondere die WIPO-Benennungsgebühren für nicht eigens 
 Länder sollten vor verbindlicher Nutzung gegen den
 [WIPO Fee Calculator](https://madrid.wipo.int/feecalcapp/) geprüft werden.
 
+## Markenrecherche (`recherche.html`)
+
+Eigenständige, per Link vom Gebührenrechner erreichbare Seite zur Markenrecherche. Öffnet auf
+Knopfdruck [TMview](https://www.tmdn.org/tmview/) (das offizielle, von EUIPO betriebene
+Sammel-Recherchetool für DPMA, EUIPO, WIPO/IR-Marken, UKIPO, Schweiz u. v. m.) mit vorausgefülltem
+Suchbegriff, Nizza-Klassen und Länderauswahl in einem neuen Tab. Zusätzlich Direktlinks zu den
+einzelnen offiziellen Datenbanken (DPMAregister, EUIPO eSearch plus, WIPO Global Brand Database,
+UK IPO, Swissreg) ohne Vorbefüllung. Führt selbst keine Recherche durch und speichert nichts – die
+eigentliche Suche läuft direkt bei den Ämtern im Browser des Nutzers.
+
 ## Lokal testen
 
 Einfach `index.html` im Browser öffnen, oder z. B. mit einem simplen lokalen Server:
